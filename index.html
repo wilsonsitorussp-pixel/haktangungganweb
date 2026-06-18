@@ -4,18 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aplikasi Arsip Hak Tanggungan</title>
-    <!-- Menggunakan Tailwind CSS via CDN untuk desain cepat -->
+    <!-- Menggunakan Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Menggunakan Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        /* Animasi sederhana */
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* Scrollbar kustom */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -28,7 +26,7 @@
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col md:flex-row">
 
     <!-- SIDEBAR -->
-    <aside class="w-full md:w-64 bg-slate-900 text-white flex flex-col shadow-xl">
+    <aside class="w-full md:w-64 bg-slate-900 text-white flex flex-col shadow-xl z-20">
         <div class="p-6 flex items-center gap-3 border-b border-slate-800">
             <div class="bg-blue-600 p-2 rounded-lg">
                 <i class="ph ph-shield-check text-2xl"></i>
@@ -62,15 +60,14 @@
         </header>
 
         <!-- TAB: DASHBOARD -->
-        <div id="tab-dashboard" class="active-tab flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6">
+        <div id="tab-dashboard" class="active-tab flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6 relative">
             
-            <!-- Alert/Notifikasi Koneksi GitHub -->
             <div id="github-alert" class="hidden mb-6 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <i class="ph ph-warning-circle text-xl"></i>
                     <div>
                         <p class="font-semibold text-sm">Penyimpanan GitHub Belum Diatur!</p>
-                        <p class="text-xs mt-0.5">Data Anda hanya tersimpan di memori browser. Silakan atur di menu Pengaturan.</p>
+                        <p class="text-xs mt-0.5">Data hanya tersimpan sementara. Silakan atur di menu Pengaturan.</p>
                     </div>
                 </div>
                 <button onclick="switchTab('settings')" class="text-amber-700 hover:bg-amber-100 px-3 py-1.5 rounded-lg text-sm font-medium transition">
@@ -78,53 +75,47 @@
                 </button>
             </div>
 
-            <!-- Kartu Statistik -->
+            <!-- Stats -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-                    <div class="bg-slate-100 p-3 rounded-full text-slate-600">
-                        <i class="ph ph-file-text text-2xl"></i>
-                    </div>
+                    <div class="bg-slate-100 p-3 rounded-full text-slate-600"><i class="ph ph-file-text text-2xl"></i></div>
                     <div>
                         <p class="text-sm font-medium text-slate-500">Total Berkas</p>
                         <p class="text-2xl font-bold text-slate-800" id="stat-total">0</p>
                     </div>
                 </div>
                 <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-                    <div class="bg-blue-50 p-3 rounded-full text-blue-600">
-                        <i class="ph ph-activity text-2xl"></i>
-                    </div>
+                    <div class="bg-blue-50 p-3 rounded-full text-blue-600"><i class="ph ph-activity text-2xl"></i></div>
                     <div>
                         <p class="text-sm font-medium text-slate-500">Dalam Proses</p>
                         <p class="text-2xl font-bold text-slate-800" id="stat-proses">0</p>
                     </div>
                 </div>
                 <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-                    <div class="bg-emerald-50 p-3 rounded-full text-emerald-600">
-                        <i class="ph ph-check-circle text-2xl"></i>
-                    </div>
+                    <div class="bg-emerald-50 p-3 rounded-full text-emerald-600"><i class="ph ph-check-circle text-2xl"></i></div>
                     <div>
-                        <p class="text-sm font-medium text-slate-500">Selesai (HT Terbit)</p>
+                        <p class="text-sm font-medium text-slate-500">Selesai / Roya</p>
                         <p class="text-2xl font-bold text-slate-800" id="stat-selesai">0</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Filter & Pencarian -->
+            <!-- Filter -->
             <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div class="relative w-full sm:max-w-md">
                     <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xl text-slate-400"></i>
-                    <input type="text" id="searchInput" oninput="renderTable()" placeholder="Cari No SPS, Debitur, SHM..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                    <input type="text" id="searchInput" oninput="renderTable()" placeholder="Cari Debitur, SHM, Notaris..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all">
                 </div>
                 <div class="flex items-center gap-3 w-full sm:w-auto">
-                    <button onclick="syncFromGithub()" class="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors" title="Tarik data terbaru dari GitHub">
-                        <i class="ph ph-arrows-clockwise text-lg" id="sync-icon"></i> Sinkron
+                    <button onclick="syncFromGithub()" class="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors">
+                        <i class="ph ph-arrows-clockwise text-lg" id="sync-icon"></i> Sinkron Data
                     </button>
                 </div>
             </div>
 
-            <!-- Daftar Dokumen Container -->
+            <!-- List Data -->
             <div id="data-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4 xl:gap-6">
-                <!-- Data akan di-render di sini oleh JavaScript -->
+                <!-- Render here -->
             </div>
         </div>
 
@@ -135,240 +126,238 @@
                     <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
                         <i class="ph ph-github-logo text-2xl"></i> Konfigurasi Database GitHub
                     </h3>
-                    <p class="text-slate-500 text-sm mt-1">Gunakan akun GitHub Anda sebagai media penyimpanan gratis. Token disimpan lokal di browser Anda.</p>
                 </div>
-                
                 <form id="settings-form" class="p-6 space-y-6" onsubmit="saveSettings(event)">
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-1">Username GitHub</label>
-                            <input type="text" id="gh-username" placeholder="Contoh: budi-santoso" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+                            <input type="text" id="gh-username" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg outline-none" required>
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-1">Nama Repository (Private)</label>
-                            <input type="text" id="gh-repo" placeholder="Contoh: data-ht-rahasia" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                            <p class="text-xs text-slate-500 mt-1">Pastikan Anda sudah membuat repository kosong dengan nama ini di akun GitHub Anda.</p>
+                            <input type="text" id="gh-repo" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg outline-none" required>
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-1">Personal Access Token (PAT)</label>
                             <div class="relative">
-                                <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm" required>
-                                <button type="button" onclick="toggleTokenVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                    <i class="ph ph-eye text-xl" id="token-eye"></i>
-                                </button>
+                                <input type="password" id="gh-token" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg outline-none font-mono" required>
                             </div>
-                            <p class="text-xs text-slate-500 mt-1">Dapatkan dari: Settings > Developer settings > Personal access tokens (classic). Centang scope 'repo'.</p>
                         </div>
                     </div>
-                    
-                    <div class="pt-4 border-t border-slate-100 flex justify-between items-center">
-                        <span id="settings-status" class="text-sm font-medium text-slate-500"></span>
-                        <button type="submit" class="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium transition-colors flex items-center gap-2">
-                            <i class="ph ph-floppy-disk text-lg"></i> Simpan Konfigurasi
-                        </button>
+                    <div class="pt-4 border-t flex justify-between items-center">
+                        <span id="settings-status" class="text-sm font-medium"></span>
+                        <button type="submit" class="px-6 py-2.5 bg-slate-900 text-white rounded-lg font-medium">Simpan Konfigurasi</button>
                     </div>
                 </form>
             </div>
         </div>
     </main>
 
-    <!-- MODAL FORM TAMBAH/EDIT -->
-    <div id="form-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 fade-in">
-        <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[95vh] flex flex-col shadow-2xl">
+    <!-- MODAL FORM INPUT/EDIT -->
+    <div id="form-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-[60] p-4 fade-in">
+        <div class="bg-white rounded-2xl w-full max-w-5xl max-h-[95vh] flex flex-col shadow-2xl">
             
             <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-2xl">
-                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2" id="modal-title">
-                    <i class="ph ph-file-plus text-blue-600 text-2xl"></i> Input Berkas Baru
-                </h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200 transition">
-                    <i class="ph ph-x text-xl"></i>
-                </button>
+                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2" id="modal-title">Input Berkas Baru</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:bg-slate-200 p-1.5 rounded-lg"><i class="ph ph-x text-xl"></i></button>
             </div>
 
             <div class="p-6 overflow-y-auto flex-1">
-                <form id="ht-form" onsubmit="handleFormSubmit(event)" class="space-y-8">
+                <form id="ht-form" onsubmit="handleFormSubmit(event)" class="space-y-6">
                     <input type="hidden" id="form-id">
                     
-                    <!-- IDENTITAS UTAMA -->
-                    <div class="bg-blue-50/50 p-5 rounded-xl border border-blue-100">
-                        <h4 class="text-sm font-bold text-blue-800 uppercase tracking-wider mb-4 flex items-center gap-2">
-                            <i class="ph ph-identification-card text-lg"></i> Identitas Utama
-                        </h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div class="space-y-1.5 md:col-span-2">
-                                <label class="text-sm font-semibold text-slate-800">Nomor SPS (Surat Perintah Setor) <span class="text-red-500">*</span></label>
-                                <input type="text" id="noSPS" placeholder="Contoh: SPS/2026/001" class="w-full px-4 py-3 border-2 border-blue-200 rounded-lg focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none font-bold text-slate-800 bg-white" required>
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-sm font-semibold text-slate-700">Nama Debitur <span class="text-red-500">*</span></label>
-                                <input type="text" id="namaDebitur" placeholder="Nama Lengkap" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 outline-none" required>
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-sm font-semibold text-slate-700">Obyek (No SHM/HGB) <span class="text-red-500">*</span></label>
-                                <input type="text" id="noSHM" placeholder="Contoh: SHM No. 123" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 outline-none" required>
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-sm font-semibold text-slate-700">Nilai Tanggungan (Rp)</label>
-                                <input type="number" id="nilai" placeholder="Contoh: 150000000" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 outline-none">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- STATUS & PROGRESS -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-1.5">
-                            <label class="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                                <i class="ph ph-chart-line-up"></i> Progress Saat Ini
-                            </label>
-                            <select id="progress" onchange="toggleSHTFields()" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 outline-none bg-white font-medium">
-                                <option value="Pemberkasan Awal">Pemberkasan Awal</option>
-                                <option value="Menunggu SPS">Menunggu SPS</option>
-                                <option value="Penerbitan SPS">Penerbitan SPS</option>
-                                <option value="Penerbitan HT">Penerbitan HT</option>
-                                <option value="Selesai">Selesai</option>
-                            </select>
-                        </div>
-                        <div class="space-y-1.5">
-                            <label class="text-sm font-semibold text-slate-700">Status</label>
-                            <select id="status" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:border-blue-500 outline-none bg-white">
-                                <option value="Aktif">Aktif</option>
-                                <option value="Roya">Roya (Selesai/Dicabut)</option>
-                            </select>
-                        </div>
+                        <!-- BAGIAN KIRI: IDENTITAS -->
+                        <div class="space-y-5">
+                            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-4">
+                                <div class="flex gap-4">
+                                    <div class="w-1/2">
+                                        <label class="text-sm font-semibold text-blue-900">Kategori Berkas <span class="text-red-500">*</span></label>
+                                        <select id="kategori" class="w-full mt-1 px-3 py-2 border border-blue-200 rounded focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-800 bg-white">
+                                            <option value="Pembuatan HT">Pembuatan HT</option>
+                                            <option value="Roya">Roya</option>
+                                        </select>
+                                    </div>
+                                    <div class="w-1/2">
+                                        <label class="text-sm font-semibold text-blue-900">Tanggal Kirim <span class="text-red-500">*</span></label>
+                                        <input type="date" id="tglKirim" class="w-full mt-1 px-3 py-2 border border-blue-200 rounded outline-none" required>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-blue-900">Nomor SPS <span class="text-red-500">*</span></label>
+                                    <input type="text" id="noSPS" class="w-full mt-1 px-3 py-2.5 border-2 border-blue-300 rounded outline-none font-bold text-lg uppercase" required>
+                                </div>
+                            </div>
 
-                        <!-- Fields SHT (Hidden default) -->
-                        <div id="sht-fields" class="hidden space-y-1.5 md:col-span-2 bg-emerald-50 p-4 rounded-xl border border-emerald-200 mt-2">
-                            <label class="text-sm font-bold text-emerald-800">Sertifikat Hak Tanggungan (SHT)</label>
-                            <div class="flex gap-4">
-                                <input type="text" id="noSHT" placeholder="No SHT yang diterbitkan" class="w-full px-4 py-2.5 border border-emerald-300 rounded-lg focus:border-emerald-500 outline-none bg-white">
-                                <input type="date" id="tanggal" class="w-48 px-4 py-2.5 border border-emerald-300 rounded-lg focus:border-emerald-500 outline-none bg-white" title="Tanggal Terbit">
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-600">Nama Debitur <span class="text-red-500">*</span></label>
+                                    <input type="text" id="namaDebitur" class="w-full px-3 py-2 border rounded outline-none" required>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="text-xs font-semibold text-slate-600">Obyek (SHM/HGB) <span class="text-red-500">*</span></label>
+                                        <input type="text" id="noSHM" class="w-full px-3 py-2 border rounded outline-none" required>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-semibold text-slate-600">Nilai (Rp)</label>
+                                        <input type="number" id="nilai" class="w-full px-3 py-2 border rounded outline-none">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="text-xs font-semibold text-slate-600">Notaris <span class="text-red-500">*</span></label>
+                                        <input type="text" id="notaris" class="w-full px-3 py-2 border rounded outline-none" required>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-semibold text-slate-600">Kantor Pertanahan <span class="text-red-500">*</span></label>
+                                        <input type="text" id="kantah" class="w-full px-3 py-2 border rounded outline-none" required>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- UPLOAD BERKAS -->
-                    <div>
-                        <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b pb-2 flex justify-between items-center">
-                            <span>Kelengkapan Berkas Fisik</span>
-                            <span class="text-xs font-normal text-slate-500 normal-case bg-amber-50 text-amber-600 px-2 py-1 rounded border border-amber-200">
-                                <i class="ph ph-info"></i> File max 1MB (Base64 GitHub)
-                            </span>
-                        </h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="file-upload-container">
-                            <!-- Di-generate via JS -->
+                        <!-- BAGIAN KANAN: STATUS & FILE -->
+                        <div class="space-y-5">
+                            <div class="flex gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                                <div class="w-1/2">
+                                    <label class="text-xs font-bold text-slate-700 uppercase">Progress</label>
+                                    <select id="progress" onchange="toggleSHTFields()" class="w-full mt-1 px-3 py-2 border rounded bg-white">
+                                        <option value="Pemberkasan Awal">Pemberkasan Awal</option>
+                                        <option value="Menunggu SPS">Menunggu SPS</option>
+                                        <option value="Penerbitan SPS">Penerbitan SPS</option>
+                                        <option value="Penerbitan HT">Penerbitan HT</option>
+                                        <option value="Selesai">Selesai</option>
+                                    </select>
+                                </div>
+                                <div class="w-1/2">
+                                    <label class="text-xs font-bold text-slate-700 uppercase">Status</label>
+                                    <select id="status" class="w-full mt-1 px-3 py-2 border rounded bg-white">
+                                        <option value="Aktif">Aktif</option>
+                                        <option value="Roya">Roya</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div id="sht-fields" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-xl grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-xs font-bold text-emerald-800">No SHT</label>
+                                    <input type="text" id="noSHT" class="w-full mt-1 px-3 py-1.5 border border-emerald-300 rounded outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-emerald-800">Tgl Terbit</label>
+                                    <input type="date" id="tanggal" class="w-full mt-1 px-3 py-1.5 border border-emerald-300 rounded outline-none">
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-800 border-b pb-2 mb-3 flex justify-between">
+                                    Lampiran <span class="text-[10px] font-normal bg-amber-100 px-2 rounded">Max 1.5MB</span>
+                                </h4>
+                                <div class="grid grid-cols-2 gap-2" id="file-upload-container">
+                                    <!-- JS Render -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </form>
             </div>
 
-            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center rounded-b-2xl">
-                <div id="form-loading" class="hidden text-blue-600 text-sm font-medium flex items-center gap-2">
-                    <i class="ph ph-spinner-gap animate-spin text-xl"></i> Menyimpan ke GitHub...
+            <div class="px-6 py-4 border-t bg-slate-50 flex justify-end gap-3 rounded-b-2xl">
+                <div id="form-loading" class="hidden text-blue-600 text-sm font-medium items-center gap-2 mr-auto">
+                    <i class="ph ph-spinner-gap animate-spin text-xl"></i> Menyimpan...
                 </div>
-                <div></div> <!-- Spacer -->
-                <div class="flex gap-3">
-                    <button type="button" onclick="closeModal()" class="px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200 rounded-lg transition">Batal</button>
-                    <button type="submit" form="ht-form" id="btn-save" class="px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition shadow-sm flex items-center gap-2">
-                        <i class="ph ph-check-circle text-lg"></i> Simpan Data
-                    </button>
-                </div>
+                <button type="button" onclick="closeModal()" class="px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-200 rounded-lg">Batal</button>
+                <button type="submit" form="ht-form" id="btn-save" class="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2">
+                    <i class="ph ph-floppy-disk text-lg"></i> Simpan
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- NOTIFIKASI TOAST -->
-    <div id="toast" class="fixed top-4 right-4 z-[100] transform transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border bg-white">
-        <i id="toast-icon" class="ph text-2xl"></i>
-        <p id="toast-msg" class="font-medium text-sm"></p>
+    <!-- MODAL DETIL -->
+    <div id="detail-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-[70] p-4 fade-in">
+        <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+            <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="ph ph-list-magnifying-glass text-blue-600 text-xl"></i> Detil Berkas</h3>
+                <button onclick="closeDetailModal()" class="text-slate-400 hover:bg-slate-200 p-1.5 rounded-lg"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto" id="detail-content">
+                <!-- JS Render -->
+            </div>
+        </div>
     </div>
 
-    <!-- LOGIKA APLIKASI (JavaScript Vanilla) -->
+    <!-- MODAL PREVIEW FILE -->
+    <div id="preview-modal" class="fixed inset-0 bg-slate-900/95 backdrop-blur-md hidden items-center justify-center z-[100] p-4 fade-in flex-col">
+        <div class="w-full max-w-5xl flex justify-between items-center mb-4">
+            <h3 class="text-white font-bold text-lg flex items-center gap-2">
+                <i class="ph ph-file-pdf text-red-400"></i> <span id="preview-filename">File.pdf</span>
+            </h3>
+            <button onclick="closePreviewModal()" class="text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm font-medium">
+                Tutup <i class="ph ph-x"></i>
+            </button>
+        </div>
+        <div class="w-full max-w-5xl h-[80vh] bg-white rounded-xl overflow-hidden shadow-2xl relative flex items-center justify-center">
+            <div id="preview-loading" class="absolute flex flex-col items-center gap-2 text-slate-400">
+                <i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i>
+                <span>Memuat dokumen dari GitHub...</span>
+            </div>
+            <iframe id="preview-frame" class="w-full h-full hidden" src=""></iframe>
+            <img id="preview-img" class="max-w-full max-h-full object-contain hidden" src="">
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed top-4 right-4 z-[200] transform transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border bg-white">
+        <i id="toast-icon" class="ph text-2xl"></i><p id="toast-msg" class="font-medium text-sm"></p>
+    </div>
+
+    <!-- LOGIKA JAVASCRIPT -->
     <script>
-        // --- STATE APLIKASI ---
-        let appData = []; // Array of objects untuk menyimpan data dokumen
-        let fileQueue = {}; // Untuk menampung file sebelum di-upload { [key]: {name, contentBase64} }
-        let currentSha = null; // Diperlukan GitHub API untuk update file
+        let appData = [];
+        let fileQueue = {};
+        let currentSha = null;
         
-        // Jenis-jenis file lampiran
+        // Attachment update: Stiker -> Sertifikat
         const attachmentTypes = [
-            { key: 'spa', label: 'Surat Kuasa (SPA)' },
-            { key: 'pengantar', label: 'Surat Pengantar' },
+            { key: 'spa', label: 'Surat Kuasa' },
+            { key: 'pengantar', label: 'Pengantar' },
             { key: 'sps', label: 'Dokumen SPS' },
             { key: 'catatanHT', label: 'Catatan HT' },
-            { key: 'stikerHT', label: 'Stiker HT' }
+            { key: 'sertifikatHT', label: 'Sertifikat HT' } // Diperbarui
         ];
 
-        // --- INISIALISASI SAAT HALAMAN DIMUAT ---
         document.addEventListener('DOMContentLoaded', () => {
             loadSettings();
             generateFileUploadUI();
-            
-            // Cek apakah ada kredensial, jika ya coba sinkronisasi
             if(getGithubConfig().token) {
                 document.getElementById('github-alert').classList.add('hidden');
                 syncFromGithub();
             } else {
                 document.getElementById('github-alert').classList.remove('hidden');
-                // Beri data dummy sementara jika belum atur github
-                appData = [
-                    { id: Date.now(), noSPS: 'SPS/Contoh/01', namaDebitur: 'Budi (Data Lokal)', noSHM: 'SHM 123', progress: 'Pemberkasan Awal', status: 'Aktif', files: {} }
-                ];
+                appData = [{ id: 1, kategori: 'Pembuatan HT', tglKirim: '2023-10-01', noSPS: 'SPS/2023/100', namaDebitur: 'Data Simulasi Lokal', noSHM: 'SHM 01', nilai: 100000000, notaris: 'Notaris A', kantah: 'BPN Kota', progress: 'Pemberkasan Awal', status: 'Aktif', files: {} }];
                 renderTable();
             }
         });
 
-        // --- FUNGSI UI & TAB NAVIGATION ---
+        // Tab & Toast Logic
         function switchTab(tabName) {
-            document.getElementById('tab-dashboard').classList.remove('active-tab');
             document.getElementById('tab-dashboard').classList.add('hidden-tab');
-            document.getElementById('tab-settings').classList.remove('active-tab');
             document.getElementById('tab-settings').classList.add('hidden-tab');
-            
-            document.getElementById('btn-dashboard').classList.remove('bg-blue-600/20', 'text-blue-400');
-            document.getElementById('btn-settings').classList.remove('bg-blue-600/20', 'text-blue-400');
-
             document.getElementById(`tab-${tabName}`).classList.remove('hidden-tab');
-            document.getElementById(`tab-${tabName}`).classList.add('active-tab');
-            document.getElementById(`btn-${tabName}`).classList.add('bg-blue-600/20', 'text-blue-400');
-
-            if(tabName === 'dashboard') {
-                document.getElementById('header-title').innerText = "Manajemen Berkas";
-                document.getElementById('header-desc').innerText = "Kelola arsip Hak Tanggungan Anda.";
-                document.getElementById('header-action').style.display = 'block';
-            } else {
-                document.getElementById('header-title').innerText = "Pengaturan";
-                document.getElementById('header-desc').innerText = "Konfigurasi penyimpanan GitHub.";
-                document.getElementById('header-action').style.display = 'none';
-            }
         }
 
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
-            const icon = document.getElementById('toast-icon');
-            
             document.getElementById('toast-msg').innerText = message;
-            toast.className = `fixed top-4 right-4 z-[100] transform transition-all duration-300 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border`;
-            
-            if (type === 'success') {
-                toast.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-800');
-                icon.className = 'ph ph-check-circle text-2xl text-emerald-600';
-            } else {
-                toast.classList.add('bg-red-50', 'border-red-200', 'text-red-800');
-                icon.className = 'ph ph-warning-circle text-2xl text-red-600';
-            }
-
-            // Tampilkan
-            setTimeout(() => {
-                toast.classList.remove('translate-y-[-100%]', 'opacity-0');
-            }, 10);
-
-            // Sembunyikan setelah 3 detik
-            setTimeout(() => {
-                toast.classList.add('translate-y-[-100%]', 'opacity-0');
-            }, 3000);
+            toast.className = `fixed top-4 right-4 z-[200] transform transition-all duration-300 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border ${type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`;
+            document.getElementById('toast-icon').className = `ph ${type === 'success' ? 'ph-check-circle text-emerald-600' : 'ph-warning-circle text-red-600'} text-2xl`;
+            setTimeout(() => toast.classList.remove('translate-y-[-100%]', 'opacity-0'), 10);
+            setTimeout(() => toast.classList.add('translate-y-[-100%]', 'opacity-0'), 3000);
         }
 
-        // --- GITHUB CONFIG & API LOGIC ---
+        // GitHub Logic
         function getGithubConfig() {
             return {
                 username: localStorage.getItem('gh_username') || '',
@@ -389,215 +378,172 @@
             localStorage.setItem('gh_username', document.getElementById('gh-username').value.trim());
             localStorage.setItem('gh_repo', document.getElementById('gh-repo').value.trim());
             localStorage.setItem('gh_token', document.getElementById('gh-token').value.trim());
-            
-            const status = document.getElementById('settings-status');
-            status.innerText = "Tersimpan! Menguji koneksi...";
-            status.className = "text-sm font-medium text-blue-600";
-            
-            // Tes Koneksi
+            document.getElementById('settings-status').innerText = "Menguji koneksi...";
             syncFromGithub().then(success => {
                 if(success) {
-                    status.innerText = "Koneksi Berhasil! Database terhubung.";
-                    status.className = "text-sm font-medium text-emerald-600";
+                    document.getElementById('settings-status').innerText = "Koneksi Berhasil!";
                     document.getElementById('github-alert').classList.add('hidden');
-                    setTimeout(() => switchTab('dashboard'), 1500);
+                    setTimeout(() => switchTab('dashboard'), 1000);
                 } else {
-                    status.innerText = "Gagal terhubung. Cek Token atau Nama Repo!";
-                    status.className = "text-sm font-medium text-red-600";
+                    document.getElementById('settings-status').innerText = "Gagal terhubung!";
                 }
             });
         }
 
-        function toggleTokenVisibility() {
-            const input = document.getElementById('gh-token');
-            const eye = document.getElementById('token-eye');
-            if (input.type === 'password') {
-                input.type = 'text';
-                eye.classList.replace('ph-eye', 'ph-eye-closed');
-            } else {
-                input.type = 'password';
-                eye.classList.replace('ph-eye-closed', 'ph-eye');
-            }
-        }
-
-        // API: Ambil Data dari GitHub
         async function syncFromGithub() {
             const config = getGithubConfig();
-            if(!config.token || !config.repo) return false;
-
-            const syncIcon = document.getElementById('sync-icon');
-            syncIcon.classList.add('animate-spin');
-
-            const url = `https://api.github.com/repos/${config.username}/${config.repo}/contents/database.json`;
+            if(!config.token) return false;
+            document.getElementById('sync-icon')?.classList.add('animate-spin');
             
             try {
-                const response = await fetch(url, {
-                    headers: { 'Authorization': `token ${config.token}` }
-                });
-
+                const url = `https://api.github.com/repos/${config.username}/${config.repo}/contents/database.json`;
+                const response = await fetch(url, { headers: { 'Authorization': `token ${config.token}` } });
+                
                 if (response.ok) {
                     const data = await response.json();
-                    currentSha = data.sha; // Simpan SHA untuk update
-                    
-                    // Decode Base64 content
-                    const decodedContent = atob(data.content);
-                    appData = JSON.parse(decodedContent);
-                    showToast('Data berhasil disinkronkan', 'success');
+                    currentSha = data.sha;
+                    appData = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+                    showToast('Data tersinkron');
                 } else if (response.status === 404) {
-                    // File belum ada, ini repo baru
-                    appData = [];
-                    currentSha = null;
-                    showToast('Repository kosong. Data baru siap dibuat.', 'success');
-                } else {
-                    throw new Error('Gagal akses repo');
+                    appData = []; currentSha = null;
                 }
                 renderTable();
-                syncIcon.classList.remove('animate-spin');
+                document.getElementById('sync-icon')?.classList.remove('animate-spin');
                 return true;
             } catch (error) {
-                console.error(error);
-                showToast('Gagal terhubung ke GitHub', 'error');
-                syncIcon.classList.remove('animate-spin');
+                document.getElementById('sync-icon')?.classList.remove('animate-spin');
                 return false;
             }
         }
 
-        // API: Simpan Data Text/JSON ke GitHub
         async function saveDatabaseToGithub() {
             const config = getGithubConfig();
-            if(!config.token) {
-                showToast('Atur token GitHub terlebih dahulu!', 'error');
-                return false;
-            }
+            if(!config.token) return false;
 
             const url = `https://api.github.com/repos/${config.username}/${config.repo}/contents/database.json`;
-            
-            // Encode ke Base64 (Untuk support karakter Indonesia/UTF-8 secara aman)
-            const contentStr = JSON.stringify(appData, null, 2);
-            // Menggunakan fungsi encode yang aman untuk utf-8
-            const contentBase64 = btoa(unescape(encodeURIComponent(contentStr)));
+            const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(appData, null, 2))));
 
             const bodyData = {
                 message: `Update Data HT: ${new Date().toLocaleString()}`,
                 content: contentBase64,
-                sha: currentSha || undefined // Wajib disertakan jika file sudah ada
+                sha: currentSha || undefined
             };
 
             try {
                 const response = await fetch(url, {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `token ${config.token}`,
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Authorization': `token ${config.token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(bodyData)
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    currentSha = data.content.sha; // Update SHA dengan yang baru
+                    currentSha = data.content.sha;
                     return true;
-                } else {
-                    throw new Error('Gagal write API');
                 }
-            } catch (error) {
-                console.error(error);
-                showToast('Gagal menyimpan database ke GitHub', 'error');
-                return false;
-            }
+            } catch (error) { return false; }
         }
 
-        // API: Upload File Base64 ke GitHub
         async function uploadFileToGithub(fileObj, folderName) {
             const config = getGithubConfig();
-            const fileNameLengkap = `${folderName}_${fileObj.name.replace(/[^a-zA-Z0-9.]/g, '_')}`; // Bersihkan nama file
+            const fileNameLengkap = `${folderName}_${fileObj.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
             const url = `https://api.github.com/repos/${config.username}/${config.repo}/contents/lampiran/${fileNameLengkap}`;
 
             try {
                 const response = await fetch(url, {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `token ${config.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: `Upload lampiran ${fileNameLengkap}`,
-                        content: fileObj.contentBase64 // Sudah murni base64 dari FileReader
-                    })
+                    headers: { 'Authorization': `token ${config.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: `Upload ${fileNameLengkap}`, content: fileObj.contentBase64 })
                 });
-                
+                if(response.ok) return fileNameLengkap;
+            } catch (error) { return null; }
+        }
+
+        // Fitur Preview File dari Github
+        async function fetchFileFromGithub(fileName) {
+            const config = getGithubConfig();
+            const url = `https://api.github.com/repos/${config.username}/${config.repo}/contents/lampiran/${fileName}`;
+            
+            try {
+                const response = await fetch(url, { headers: { 'Authorization': `token ${config.token}` } });
                 if(response.ok) {
-                    return fileNameLengkap; // Kembalikan nama file yang tersimpan
+                    const data = await response.json();
+                    // Buat Data URL untuk di-load di iframe/img
+                    const mimeType = fileName.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg';
+                    return `data:${mimeType};base64,${data.content}`;
                 }
                 return null;
-            } catch (error) {
-                console.error('Gagal upload lampiran', error);
-                return null;
+            } catch (e) { return null; }
+        }
+
+        async function openPreview(fileName) {
+            document.getElementById('preview-modal').style.display = 'flex';
+            document.getElementById('preview-filename').innerText = fileName;
+            document.getElementById('preview-loading').classList.remove('hidden');
+            
+            const frame = document.getElementById('preview-frame');
+            const img = document.getElementById('preview-img');
+            frame.classList.add('hidden'); img.classList.add('hidden');
+            frame.src = ''; img.src = '';
+
+            const dataUrl = await fetchFileFromGithub(fileName);
+            document.getElementById('preview-loading').classList.add('hidden');
+
+            if(dataUrl) {
+                if(fileName.toLowerCase().endsWith('.pdf')) {
+                    frame.src = dataUrl;
+                    frame.classList.remove('hidden');
+                } else {
+                    img.src = dataUrl;
+                    img.classList.remove('hidden');
+                }
+            } else {
+                showToast("Gagal memuat file", "error");
+                closePreviewModal();
             }
         }
 
-        // --- FORM & MODAL LOGIC ---
+        function closePreviewModal() {
+            document.getElementById('preview-modal').style.display = 'none';
+            document.getElementById('preview-frame').src = '';
+            document.getElementById('preview-img').src = '';
+        }
+
+
+        // Form UI
         function toggleSHTFields() {
             const progress = document.getElementById('progress').value;
             const fields = document.getElementById('sht-fields');
-            if (['Penerbitan HT', 'Selesai'].includes(progress)) {
-                fields.classList.remove('hidden');
-            } else {
-                fields.classList.add('hidden');
-                document.getElementById('noSHT').value = '';
-                document.getElementById('tanggal').value = '';
-            }
+            if (['Penerbitan HT', 'Selesai'].includes(progress)) fields.classList.remove('hidden');
+            else { fields.classList.add('hidden'); document.getElementById('noSHT').value = ''; document.getElementById('tanggal').value = ''; }
         }
 
         function generateFileUploadUI() {
             const container = document.getElementById('file-upload-container');
-            container.innerHTML = '';
-            
-            attachmentTypes.forEach(type => {
-                const div = document.createElement('div');
-                div.className = "border border-slate-200 rounded-xl p-3 bg-white shadow-sm";
-                div.innerHTML = `
-                    <div class="flex items-center gap-2 mb-2">
-                        <i class="ph ph-file-pdf text-slate-500"></i>
-                        <span class="text-sm font-semibold text-slate-700">${type.label}</span>
-                    </div>
+            container.innerHTML = attachmentTypes.map(type => `
+                <div class="border rounded p-2 text-xs bg-white">
+                    <div class="font-bold text-slate-700 mb-1">${type.label}</div>
                     <div id="wrapper-${type.key}">
-                        <label class="flex items-center justify-center w-full h-9 transition bg-slate-50 border border-slate-300 border-dashed rounded cursor-pointer hover:border-blue-400 hover:bg-blue-50">
-                            <span class="text-xs font-medium text-slate-500">Pilih File (PDF/JPG)</span>
-                            <input type="file" id="file-${type.key}" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect('${type.key}')">
+                        <label class="flex justify-center border-dashed border-2 py-1 cursor-pointer bg-slate-50 hover:bg-blue-50">
+                            Pilih File <input type="file" id="file-${type.key}" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect('${type.key}')">
                         </label>
                     </div>
-                    <div id="preview-${type.key}" class="hidden mt-2 bg-blue-50 border border-blue-100 rounded px-2 py-1 flex justify-between items-center">
-                        <span class="text-[10px] font-medium text-blue-800 truncate" id="name-${type.key}"></span>
-                        <button type="button" onclick="removeQueuedFile('${type.key}')" class="text-red-500 hover:text-red-700"><i class="ph ph-x"></i></button>
+                    <div id="preview-${type.key}" class="hidden flex justify-between bg-blue-50 p-1 mt-1 rounded border border-blue-100">
+                        <span class="truncate max-w-[80px]" id="name-${type.key}"></span>
+                        <button type="button" onclick="removeFile('${type.key}')" class="text-red-500"><i class="ph ph-x"></i></button>
                     </div>
-                `;
-                container.appendChild(div);
-            });
+                </div>
+            `).join('');
         }
 
         function handleFileSelect(key) {
-            const fileInput = document.getElementById(`file-${key}`);
-            const file = fileInput.files[0];
-            
-            if (file) {
-                // Batasi max 1.5MB karena Base64 akan membengkak saat dikirim ke API
-                if(file.size > 1500000) {
-                    showToast('File terlalu besar! Maksimal 1.5MB', 'error');
-                    fileInput.value = '';
-                    return;
-                }
-
+            const file = document.getElementById(`file-${key}`).files[0];
+            if(file) {
+                if(file.size > 1500000) return showToast('File Max 1.5MB', 'error');
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onloadend = () => {
-                    // Ambil string base64 saja (buang data:image/jpeg;base64,)
-                    const base64data = reader.result.split(',')[1];
-                    fileQueue[key] = {
-                        name: file.name,
-                        contentBase64: base64data
-                    };
-                    
+                    fileQueue[key] = { name: file.name, contentBase64: reader.result.split(',')[1] };
                     document.getElementById(`wrapper-${key}`).classList.add('hidden');
                     document.getElementById(`preview-${key}`).classList.remove('hidden');
                     document.getElementById(`name-${key}`).innerText = file.name;
@@ -605,243 +551,200 @@
             }
         }
 
-        function removeQueuedFile(key) {
+        function removeFile(key) {
             delete fileQueue[key];
-            document.getElementById(`file-${key}`).value = '';
             document.getElementById(`wrapper-${key}`).classList.remove('hidden');
             document.getElementById(`preview-${key}`).classList.add('hidden');
         }
 
-        // Tampilkan data yang sudah ada di Form File
-        function renderExistingFiles(existingFilesObj) {
-            fileQueue = {}; // Reset queue
-            generateFileUploadUI(); // Reset UI
-            
-            if(!existingFilesObj) return;
-
-            Object.keys(existingFilesObj).forEach(key => {
-                if(existingFilesObj[key]) {
-                    document.getElementById(`wrapper-${key}`).classList.add('hidden');
-                    document.getElementById(`preview-${key}`).classList.remove('hidden');
-                    document.getElementById(`name-${key}`).innerText = existingFilesObj[key];
-                    // Hapus fungsi remove karena ini file dari server (untuk versi sederhana ini)
-                    document.getElementById(`preview-${key}`).innerHTML = `
-                        <span class="text-[10px] font-medium text-blue-800 truncate"><i class="ph ph-cloud-check mr-1"></i>${existingFilesObj[key]}</span>
-                    `;
-                }
-            });
-        }
-
         function openModal(id = null) {
             document.getElementById('form-modal').style.display = 'flex';
-            const form = document.getElementById('ht-form');
-            form.reset();
-            fileQueue = {};
-            generateFileUploadUI();
+            document.getElementById('ht-form').reset();
+            fileQueue = {}; generateFileUploadUI();
             
             if (id) {
-                document.getElementById('modal-title').innerHTML = '<i class="ph ph-pencil-simple text-blue-600 text-2xl"></i> Edit Berkas';
                 const doc = appData.find(d => d.id === id);
                 if (doc) {
+                    ['id','kategori','tglKirim','noSPS','namaDebitur','noSHM','nilai','notaris','kantah','progress','status','noSHT','tanggal'].forEach(k => {
+                        if(document.getElementById(k)) document.getElementById(k).value = doc[k] || '';
+                    });
                     document.getElementById('form-id').value = doc.id;
-                    document.getElementById('noSPS').value = doc.noSPS;
-                    document.getElementById('namaDebitur').value = doc.namaDebitur;
-                    document.getElementById('noSHM').value = doc.noSHM;
-                    document.getElementById('nilai').value = doc.nilai || '';
-                    document.getElementById('progress').value = doc.progress;
-                    document.getElementById('status').value = doc.status;
-                    document.getElementById('noSHT').value = doc.noSHT || '';
-                    document.getElementById('tanggal').value = doc.tanggal || '';
                     toggleSHTFields();
-                    renderExistingFiles(doc.files);
+                    if(doc.files) {
+                        Object.keys(doc.files).forEach(k => {
+                            if(doc.files[k]) {
+                                document.getElementById(`wrapper-${k}`).classList.add('hidden');
+                                document.getElementById(`preview-${k}`).classList.remove('hidden');
+                                document.getElementById(`preview-${k}`).innerHTML = `<span class="truncate"><i class="ph ph-check text-emerald-500"></i> ${doc.files[k]}</span>`;
+                            }
+                        });
+                    }
                 }
             } else {
-                document.getElementById('modal-title').innerHTML = '<i class="ph ph-file-plus text-blue-600 text-2xl"></i> Input Berkas Baru';
                 document.getElementById('form-id').value = '';
                 toggleSHTFields();
             }
         }
 
-        function closeModal() {
-            document.getElementById('form-modal').style.display = 'none';
-        }
+        function closeModal() { document.getElementById('form-modal').style.display = 'none'; }
 
         async function handleFormSubmit(e) {
             e.preventDefault();
-            
-            // UI Loading state
             document.getElementById('btn-save').classList.add('hidden');
             document.getElementById('form-loading').classList.remove('hidden');
 
             const id = document.getElementById('form-id').value;
-            const noSPS = document.getElementById('noSPS').value.replace(/\//g, '_'); // Hindari '/' di nama folder
-            
-            let existingFiles = {};
-            if(id) {
-                const doc = appData.find(d => d.id == id);
-                existingFiles = doc.files || {};
-            }
+            const noSPS = document.getElementById('noSPS').value.replace(/\//g, '_');
+            let existingFiles = id ? appData.find(d => d.id == id).files || {} : {};
 
-            // 1. Upload File Fisik ke GitHub (satu per satu)
             for (const key of Object.keys(fileQueue)) {
                 const uploadedName = await uploadFileToGithub(fileQueue[key], noSPS);
-                if(uploadedName) {
-                    existingFiles[key] = uploadedName; // Simpan nama file yang berhasil diupload
-                }
+                if(uploadedName) existingFiles[key] = uploadedName;
             }
 
-            // 2. Susun Data Text
             const formData = {
                 id: id ? parseInt(id) : Date.now(),
+                kategori: document.getElementById('kategori').value,
+                tglKirim: document.getElementById('tglKirim').value,
                 noSPS: document.getElementById('noSPS').value,
                 namaDebitur: document.getElementById('namaDebitur').value,
                 noSHM: document.getElementById('noSHM').value,
                 nilai: document.getElementById('nilai').value,
+                notaris: document.getElementById('notaris').value,
+                kantah: document.getElementById('kantah').value,
                 progress: document.getElementById('progress').value,
                 status: document.getElementById('status').value,
                 noSHT: document.getElementById('noSHT').value,
                 tanggal: document.getElementById('tanggal').value,
-                files: existingFiles,
-                lastUpdated: new Date().toISOString()
+                files: existingFiles
             };
 
-            if (id) {
-                const index = appData.findIndex(d => d.id == id);
-                appData[index] = formData;
-            } else {
-                appData.unshift(formData); // Tambah di awal array
-            }
+            if (id) appData[appData.findIndex(d => d.id == id)] = formData;
+            else appData.unshift(formData);
 
-            // 3. Simpan Database ke GitHub
-            const success = await saveDatabaseToGithub();
-            
-            // Reset UI Loading state
-            document.getElementById('btn-save').classList.remove('hidden');
-            document.getElementById('form-loading').classList.add('hidden');
-
-            if (success) {
-                showToast(id ? 'Data berhasil diperbarui' : 'Berkas baru berhasil ditambahkan');
+            if(await saveDatabaseToGithub()) {
+                showToast('Tersimpan!');
                 closeModal();
                 renderTable();
+            } else {
+                showToast('Gagal simpan db', 'error');
+                document.getElementById('btn-save').classList.remove('hidden');
+                document.getElementById('form-loading').classList.add('hidden');
             }
         }
 
-        async function deleteData(id) {
-            if(confirm("Yakin ingin menghapus berkas ini? (Peringatan: File lampiran di GitHub tidak akan terhapus otomatis)")) {
-                appData = appData.filter(d => d.id !== id);
-                showToast('Menyimpan perubahan ke GitHub...', 'success');
-                const success = await saveDatabaseToGithub();
-                if(success) {
-                    renderTable();
+        // Detail Modal
+        function openDetail(id) {
+            const doc = appData.find(d => d.id === id);
+            if(!doc) return;
+            
+            document.getElementById('detail-modal').style.display = 'flex';
+            
+            let filesHtml = '';
+            attachmentTypes.forEach(t => {
+                if(doc.files && doc.files[t.key]) {
+                    filesHtml += `<button onclick="openPreview('${doc.files[t.key]}')" class="flex items-center gap-2 p-2 bg-blue-50 border border-blue-100 rounded text-sm text-blue-700 hover:bg-blue-100 mb-2 w-full text-left">
+                        <i class="ph ph-file-pdf"></i> ${t.label}: ${doc.files[t.key]}
+                    </button>`;
+                } else {
+                    filesHtml += `<div class="flex items-center gap-2 p-2 bg-slate-50 border border-dashed text-slate-400 rounded text-sm mb-2 w-full"><i class="ph ph-x"></i> ${t.label}: Belum diupload</div>`;
                 }
-            }
-        }
+            });
 
-        // --- RENDER UI DATA ---
-        function getProgressColor(status) {
-            const colors = {
-                'Pemberkasan Awal': 'bg-slate-100 text-slate-700',
-                'Menunggu SPS': 'bg-amber-100 text-amber-800',
-                'Penerbitan SPS': 'bg-blue-100 text-blue-800',
-                'Penerbitan HT': 'bg-purple-100 text-purple-800',
-                'Selesai': 'bg-emerald-100 text-emerald-800'
-            };
-            return colors[status] || colors['Pemberkasan Awal'];
-        }
+            document.getElementById('detail-content').innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">${doc.kategori}</span>
+                        <h2 class="text-xl font-bold mt-2">${doc.namaDebitur}</h2>
+                        <p class="text-sm text-slate-500">SPS: ${doc.noSPS} ${doc.noSHT ? `| SHT: ${doc.noSHT}` : ''}</p>
+                    </div>
+                    <span class="bg-slate-100 border text-xs px-2 py-1 rounded font-bold">${doc.progress}</span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-y-3 gap-x-6 text-sm mb-6 bg-slate-50 p-4 rounded-xl">
+                    <div><span class="block text-xs text-slate-500">Tgl Kirim</span><span class="font-medium">${doc.tglKirim || '-'}</span></div>
+                    <div><span class="block text-xs text-slate-500">Obyek</span><span class="font-medium">${doc.noSHM}</span></div>
+                    <div><span class="block text-xs text-slate-500">Nilai</span><span class="font-medium">Rp ${Number(doc.nilai||0).toLocaleString('id-ID')}</span></div>
+                    <div><span class="block text-xs text-slate-500">Notaris</span><span class="font-medium">${doc.notaris || '-'}</span></div>
+                    <div><span class="block text-xs text-slate-500">Kantah</span><span class="font-medium">${doc.kantah || '-'}</span></div>
+                </div>
 
-        function formatRupiah(angka) {
-            if(!angka) return '-';
-            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+                <h4 class="font-bold mb-3 border-b pb-2 text-sm uppercase">Lampiran Berkas</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">${filesHtml}</div>
+            `;
         }
+        function closeDetailModal() { document.getElementById('detail-modal').style.display = 'none'; }
+
 
         function renderTable() {
             const container = document.getElementById('data-container');
             const search = document.getElementById('searchInput').value.toLowerCase();
             
-            // Update Stats
             document.getElementById('stat-total').innerText = appData.length;
-            document.getElementById('stat-selesai').innerText = appData.filter(d => d.progress === 'Selesai').length;
-            document.getElementById('stat-proses').innerText = appData.filter(d => d.progress !== 'Selesai').length;
+            document.getElementById('stat-selesai').innerText = appData.filter(d => ['Selesai','Roya'].includes(d.progress)).length;
+            document.getElementById('stat-proses').innerText = appData.filter(d => !['Selesai','Roya'].includes(d.progress)).length;
 
             const filteredData = appData.filter(doc => 
                 doc.namaDebitur.toLowerCase().includes(search) || 
                 doc.noSPS.toLowerCase().includes(search) ||
-                doc.noSHM.toLowerCase().includes(search)
+                doc.noSHM.toLowerCase().includes(search) ||
+                (doc.notaris && doc.notaris.toLowerCase().includes(search))
             );
 
-            if (filteredData.length === 0) {
-                container.innerHTML = `
-                    <div class="col-span-full text-center py-16 bg-white rounded-xl border border-dashed border-slate-300">
-                        <i class="ph ph-folder-dashed text-6xl text-slate-300 mx-auto mb-4"></i>
-                        <h3 class="text-lg font-medium text-slate-700">Tidak ada berkas</h3>
-                    </div>`;
+            if (!filteredData.length) {
+                container.innerHTML = `<div class="col-span-full text-center py-10 bg-white rounded-xl border border-dashed"><i class="ph ph-folder-dashed text-4xl text-slate-300"></i><p>Tidak ada data</p></div>`;
                 return;
             }
 
             container.innerHTML = filteredData.map(doc => {
-                // Logic rendering Icon Lampiran
-                let fileIconsHtml = '';
-                attachmentTypes.forEach(type => {
-                    const hasFile = doc.files && doc.files[type.key];
-                    const iconColor = hasFile ? 'text-emerald-500' : 'text-slate-300';
-                    const iconType = hasFile ? 'ph-check-circle' : 'ph-x-circle';
-                    fileIconsHtml += `
-                        <div class="flex items-center gap-1 bg-white px-2 py-1 rounded text-[10px] font-medium border border-slate-200" title="${type.label}">
-                            <i class="ph ${iconType} ${iconColor} text-sm"></i>
-                            <span class="truncate max-w-[60px]">${type.key.toUpperCase()}</span>
-                        </div>
-                    `;
-                });
+                // Logic click untuk icon file (preview)
+                let fileIconsHtml = attachmentTypes.map(t => {
+                    const hasFile = doc.files && doc.files[t.key];
+                    if(hasFile) {
+                        return `<button onclick="openPreview('${doc.files[t.key]}')" class="flex items-center gap-1 bg-white hover:bg-blue-50 px-2 py-1 rounded text-[10px] font-medium border border-blue-200 text-blue-700 cursor-pointer" title="Lihat ${t.label}">
+                            <i class="ph ph-eye text-sm"></i><span class="truncate max-w-[50px]">${t.key.toUpperCase()}</span>
+                        </button>`;
+                    }
+                    return `<div class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded text-[10px] text-slate-400 border border-slate-200 border-dashed" title="${t.label} Belum Ada">
+                        <i class="ph ph-minus text-sm"></i><span class="truncate max-w-[50px]">${t.key.toUpperCase()}</span>
+                    </div>`;
+                }).join('');
 
                 return `
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col">
-                    <div class="flex justify-between items-start mb-3 border-b border-slate-100 pb-3">
-                        <div>
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="bg-blue-50 border border-blue-200 text-blue-800 text-xs font-bold px-2 py-0.5 rounded">
-                                    SPS: ${doc.noSPS}
-                                </span>
-                                ${doc.noSHT ? `<span class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded">SHT: ${doc.noSHT}</span>` : ''}
+                <div class="bg-white rounded-xl border shadow-sm p-4 flex flex-col relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-2 h-full ${doc.kategori === 'Roya' ? 'bg-amber-400' : 'bg-blue-500'}"></div>
+                    <div class="flex justify-between items-start mb-3 border-b pb-2">
+                        <div class="pr-2">
+                            <div class="flex items-center gap-1 mb-1">
+                                <span class="bg-slate-100 text-[10px] font-bold px-1.5 py-0.5 rounded">${doc.kategori}</span>
+                                <span class="text-xs font-mono bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded">${doc.noSPS}</span>
                             </div>
-                            <h3 class="font-bold text-lg text-slate-800 mt-1">${doc.namaDebitur}</h3>
-                        </div>
-                        <span class="px-2.5 py-1 text-[11px] uppercase tracking-wider font-bold rounded flex items-center gap-1 ${getProgressColor(doc.progress)}">
-                            ${doc.progress}
-                        </span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-4 text-sm flex-1">
-                        <div>
-                            <p class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-0.5">Obyek HT</p>
-                            <p class="font-medium text-slate-800 line-clamp-1" title="${doc.noSHM}">${doc.noSHM}</p>
-                        </div>
-                        <div>
-                            <p class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-0.5">Nilai</p>
-                            <p class="font-medium text-slate-800">${formatRupiah(doc.nilai)}</p>
+                            <h3 class="font-bold text-slate-800 truncate" title="${doc.namaDebitur}">${doc.namaDebitur}</h3>
                         </div>
                     </div>
-
-                    <div class="bg-slate-50 rounded-lg p-2.5 mb-4">
-                        <div class="flex flex-wrap gap-1.5">
-                            ${fileIconsHtml}
-                        </div>
+                    <div class="grid grid-cols-2 gap-2 text-xs mb-3 text-slate-600">
+                        <div><i class="ph ph-map-pin"></i> ${doc.noSHM}</div>
+                        <div><i class="ph ph-buildings"></i> ${doc.kantah || '-'}</div>
+                        <div class="col-span-2"><i class="ph ph-user"></i> Notaris: ${doc.notaris || '-'}</div>
+                    </div>
+                    
+                    <!-- File Icons (Clickable) -->
+                    <div class="flex flex-wrap gap-1 mb-4 bg-slate-50 p-1.5 rounded">
+                        ${fileIconsHtml}
                     </div>
 
-                    <div class="pt-3 border-t border-slate-100 flex justify-between items-center mt-auto">
-                        <span class="text-xs font-medium px-2 py-1 rounded ${doc.status === 'Aktif' ? 'text-slate-500' : 'bg-red-50 text-red-600'}">
-                            Status: ${doc.status}
-                        </span>
-                        <div class="flex gap-2">
-                            <button onclick="openModal(${doc.id})" class="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-50 border border-blue-100 rounded transition-colors">
-                                <i class="ph ph-pencil-simple text-sm"></i> EDIT
+                    <div class="pt-3 border-t flex justify-between items-center mt-auto">
+                        <span class="text-[10px] font-bold uppercase px-2 py-1 rounded bg-slate-100">${doc.progress}</span>
+                        <div class="flex gap-1.5">
+                            <button onclick="openDetail(${doc.id})" class="px-2 py-1 text-xs font-bold text-slate-600 hover:bg-slate-100 border rounded flex items-center gap-1">
+                                <i class="ph ph-list-magnifying-glass"></i> DETIL
                             </button>
-                            <button onclick="deleteData(${doc.id})" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Hapus Data">
-                                <i class="ph ph-trash text-sm"></i>
+                            <button onclick="openModal(${doc.id})" class="px-2 py-1 text-xs font-bold text-blue-600 hover:bg-blue-50 border border-blue-100 rounded flex items-center gap-1">
+                                <i class="ph ph-pencil-simple"></i> EDIT
                             </button>
                         </div>
                     </div>
-                </div>
-                `;
+                </div>`;
             }).join('');
         }
     </script>
