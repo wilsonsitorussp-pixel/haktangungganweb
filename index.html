@@ -1,15 +1,18 @@
+```html
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Arsip Hak Tanggungan Pro</title>
+    <title>Sistem Arsip HT & Roya</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <!-- PDF-Lib untuk Menggabungkan PDF -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <!-- SheetJS untuk Export Excel -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     
     <style>
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
@@ -21,9 +24,7 @@
         .hidden-tab { display: none; }
         .active-tab { display: block; }
         .accordion-content { transition: max-height 0.3s ease-out, padding 0.3s ease; max-height: 0; overflow: hidden; }
-        .accordion-content.expanded { max-height: 800px; }
-        
-        /* Sidebar transition */
+        .accordion-content.expanded { max-height: 1200px; }
         #sidebar { transition: transform 0.3s ease-in-out; }
     </style>
 </head>
@@ -34,9 +35,8 @@
         <div class="p-6 flex items-center justify-between border-b border-slate-800">
             <div class="flex items-center gap-3">
                 <div class="bg-blue-600 p-2 rounded-lg"><i class="ph ph-shield-check text-2xl"></i></div>
-                <h1 class="text-xl font-bold tracking-tight">Arsip<span class="text-blue-400">HT</span></h1>
+                <h1 class="text-xl font-bold tracking-tight">Arsip<span class="text-blue-400">Pro</span></h1>
             </div>
-            <!-- Tombol Close (Mobile Only) -->
             <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white"><i class="ph ph-x text-2xl"></i></button>
         </div>
         <nav class="p-4 flex-1 flex flex-col gap-2 overflow-y-auto">
@@ -49,7 +49,6 @@
         </nav>
     </aside>
 
-    <!-- Overlay untuk Sidebar di Mobile -->
     <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden"></div>
 
     <!-- MAIN CONTENT -->
@@ -59,26 +58,23 @@
         <header class="bg-white border-b border-slate-200 px-4 md:px-6 py-4 flex justify-between items-center z-10 shadow-sm">
             <div class="flex items-center gap-3">
                 <button onclick="toggleSidebar()" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition"><i class="ph ph-list text-xl"></i></button>
-                <div>
-                    <h2 class="text-xl md:text-2xl font-bold text-slate-800" id="header-title">Daftar Berkas</h2>
-                </div>
+                <h2 class="text-xl md:text-2xl font-bold text-slate-800" id="header-title">Daftar Berkas</h2>
             </div>
-            <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-4 md:py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-sm text-sm">
-                <i class="ph ph-plus-circle text-lg"></i> <span class="hidden md:inline">Tambah Berkas</span>
-            </button>
+            <div class="flex gap-2">
+                <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 md:px-4 md:py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-sm text-sm" title="Download Excel">
+                    <i class="ph ph-microsoft-excel-logo text-lg"></i> <span class="hidden md:inline">Tarik Excel</span>
+                </button>
+                <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 md:px-4 md:py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-sm text-sm">
+                    <i class="ph ph-plus-circle text-lg"></i> <span class="hidden md:inline">Tambah Berkas</span>
+                </button>
+            </div>
         </header>
 
-        <!-- TAB: DASHBOARD (LIST VIEW) -->
+        <!-- TAB: DASHBOARD -->
         <div id="tab-dashboard" class="active-tab flex-1 overflow-auto p-4 md:p-6 bg-slate-50">
             
             <div id="github-alert" class="hidden mb-4 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl flex items-center justify-between shadow-sm">
-                <div class="flex items-center gap-3">
-                    <i class="ph ph-warning-circle text-xl"></i>
-                    <div>
-                        <p class="font-semibold text-sm">Penyimpanan GitHub Belum Diatur!</p>
-                        <p class="text-xs">Data tidak akan tersimpan permanen.</p>
-                    </div>
-                </div>
+                <div class="flex items-center gap-3"><i class="ph ph-warning-circle text-xl"></i><div><p class="font-semibold text-sm">Penyimpanan GitHub Belum Diatur!</p></div></div>
                 <button onclick="switchTab('settings')" class="text-amber-700 hover:bg-amber-100 px-3 py-1.5 rounded-lg text-sm font-bold transition">Atur</button>
             </div>
 
@@ -86,20 +82,22 @@
             <div class="bg-white p-3 md:p-4 rounded-xl border border-slate-200 shadow-sm mb-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
                 <div class="relative w-full sm:max-w-md">
                     <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-lg text-slate-400"></i>
-                    <input type="text" id="searchInput" oninput="renderList()" placeholder="Cari Debitur, SHM, Notaris, No SPS..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm">
+                    <input type="text" id="searchInput" oninput="renderList()" placeholder="Cari Debitur, SHM, Notaris, No SPS, BRI Unit..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm">
                 </div>
                 <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">TOTAL: <span id="stat-total" class="text-slate-800">0</span></span>
+                    <select id="filterKategori" onchange="renderList()" class="bg-slate-50 border border-slate-200 text-slate-600 px-3 py-2 rounded-lg text-sm outline-none">
+                        <option value="Semua">Semua Kategori</option>
+                        <option value="Pembuatan HT">Pembuatan HT</option>
+                        <option value="Roya">Roya</option>
+                    </select>
+                    <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1.5 rounded">TOTAL: <span id="stat-total" class="text-slate-800">0</span></span>
                     <button onclick="syncFromGithub()" class="flex items-center gap-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-sm font-bold transition-colors ml-auto">
-                        <i class="ph ph-arrows-clockwise text-lg" id="sync-icon"></i> Sinkron
+                        <i class="ph ph-arrows-clockwise text-lg" id="sync-icon"></i> Sync
                     </button>
                 </div>
             </div>
 
-            <!-- List Data Container -->
-            <div id="list-container" class="space-y-3 pb-20">
-                <!-- JS Render -->
-            </div>
+            <div id="list-container" class="space-y-3 pb-20"></div>
         </div>
 
         <!-- TAB: SETTINGS -->
@@ -120,106 +118,111 @@
     </main>
 
     <!-- MODAL FORM INPUT/EDIT -->
-    <div id="form-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-[60] p-3 md:p-4 fade-in">
-        <div class="bg-white rounded-2xl w-full max-w-5xl h-[95vh] md:h-auto md:max-h-[95vh] flex flex-col shadow-2xl overflow-hidden">
+    <div id="form-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-[60] p-2 md:p-4 fade-in">
+        <div class="bg-white rounded-2xl w-full max-w-6xl h-[98vh] md:h-auto md:max-h-[95vh] flex flex-col shadow-2xl overflow-hidden">
             
             <div class="px-4 py-3 border-b flex justify-between items-center bg-slate-50">
-                <h3 class="text-lg font-bold flex items-center gap-2 text-slate-800" id="modal-title">Input Berkas Baru</h3>
+                <h3 class="text-lg font-bold flex items-center gap-2 text-slate-800" id="modal-title">Input Berkas</h3>
                 <button onclick="closeModal()" class="text-slate-400 hover:bg-slate-200 p-1.5 rounded"><i class="ph ph-x text-lg"></i></button>
             </div>
 
-            <div class="p-4 overflow-y-auto flex-1 bg-slate-50">
+            <div class="p-4 overflow-y-auto flex-1 bg-slate-100">
                 <form id="ht-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
                     <input type="hidden" id="form-id">
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- KIRI: IDENTITAS -->
-                        <div class="space-y-4">
-                            <div class="bg-white p-4 rounded-xl border shadow-sm">
-                                <div class="flex gap-3 mb-3">
-                                    <div class="w-1/2">
-                                        <label class="text-xs font-bold text-slate-500 uppercase">Kategori <span class="text-red-500">*</span></label>
-                                        <select id="kategori" class="w-full mt-1 px-3 py-2 border rounded text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 font-bold text-blue-800 outline-none">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                        
+                        <!-- KIRI: IDENTITAS (Col Span 5) -->
+                        <div class="lg:col-span-5 space-y-4">
+                            <!-- Kategori & Unit -->
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="text-[11px] font-bold text-slate-500 uppercase">Kategori <span class="text-red-500">*</span></label>
+                                        <select id="kategori" onchange="switchKategori()" class="w-full mt-1 px-3 py-2 border rounded text-sm bg-blue-50 focus:bg-white focus:ring-2 focus:ring-blue-500 font-bold text-blue-800 outline-none">
                                             <option value="Pembuatan HT">Pembuatan HT</option>
                                             <option value="Roya">Roya</option>
                                         </select>
                                     </div>
-                                    <div class="w-1/2">
-                                        <label class="text-xs font-bold text-slate-500 uppercase">Tgl Kirim <span class="text-red-500">*</span></label>
+                                    <div>
+                                        <label class="text-[11px] font-bold text-slate-500 uppercase">Tgl Kirim <span class="text-red-500">*</span></label>
                                         <input type="date" id="tglKirim" class="w-full mt-1 px-3 py-2 border rounded text-sm outline-none" required>
                                     </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="text-xs font-bold text-slate-500 uppercase">No SPS <span class="text-red-500">*</span></label>
-                                    <input type="text" id="noSPS" class="w-full mt-1 px-3 py-2 border rounded text-sm uppercase font-mono font-bold" required>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="text-[11px] font-bold text-slate-500 uppercase">BRI Unit <span class="text-red-500">*</span></label>
+                                        <input list="bri-list" id="briUnit" placeholder="Ketik/Pilih Unit..." class="w-full mt-1 px-3 py-2 border rounded text-sm outline-none font-semibold" required>
+                                        <datalist id="bri-list"><!-- Injected by JS --></datalist>
+                                    </div>
+                                    <div>
+                                        <label class="text-[11px] font-bold text-slate-500 uppercase">No SPS / Ref <span class="text-red-500">*</span></label>
+                                        <input type="text" id="noSPS" class="w-full mt-1 px-3 py-2 border rounded text-sm uppercase font-mono font-bold" required>
+                                    </div>
                                 </div>
                                 <div>
-                                    <label class="text-xs font-bold text-slate-500 uppercase">Nama Debitur <span class="text-red-500">*</span></label>
+                                    <label class="text-[11px] font-bold text-slate-500 uppercase">Nama Debitur <span class="text-red-500">*</span></label>
                                     <input type="text" id="namaDebitur" class="w-full mt-1 px-3 py-2 border rounded text-sm font-bold" required>
                                 </div>
                             </div>
 
-                            <div class="bg-white p-4 rounded-xl border shadow-sm space-y-3">
-                                <!-- Multi SHM Container -->
+                            <!-- Obyek, Notaris, Nilai -->
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
                                 <div>
-                                    <label class="text-xs font-bold text-slate-500 uppercase flex justify-between">
+                                    <label class="text-[11px] font-bold text-slate-500 uppercase flex justify-between items-center bg-slate-50 px-2 py-1 rounded border mb-2">
                                         <span>Obyek (SHM/HGB) <span class="text-red-500">*</span></span>
-                                        <button type="button" onclick="addShmInput()" class="text-blue-600 hover:text-blue-800 text-[10px]">+ Tambah SHM</button>
+                                        <button type="button" onclick="addShmInput()" class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded shadow-sm">+ SHM</button>
                                     </label>
-                                    <div id="shm-container" class="space-y-2 mt-1">
-                                        <!-- Inputs will be injected here -->
-                                    </div>
+                                    <div id="shm-container" class="space-y-2 mt-1"></div>
                                 </div>
 
-                                <div class="grid grid-cols-2 gap-3 pt-2">
+                                <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label class="text-xs font-bold text-slate-500 uppercase flex justify-between">
+                                        <label class="text-[11px] font-bold text-slate-500 uppercase flex justify-between">
                                             <span>Notaris <span class="text-red-500">*</span></span>
-                                            <button type="button" onclick="tambahNotarisBaru()" class="text-blue-600 text-[10px]">+ Baru</button>
+                                            <button type="button" onclick="tambahNotarisBaru()" class="text-blue-600">+ Baru</button>
                                         </label>
-                                        <select id="notaris" class="w-full mt-1 px-3 py-2 border rounded text-sm outline-none bg-slate-50" required>
-                                            <!-- Options injected via JS -->
-                                        </select>
+                                        <select id="notaris" class="w-full mt-1 px-3 py-2 border rounded text-sm outline-none bg-slate-50" required></select>
                                     </div>
                                     <div>
-                                        <label class="text-xs font-bold text-slate-500 uppercase">Kantah <span class="text-red-500">*</span></label>
-                                        <input type="text" id="kantah" class="w-full mt-1 px-3 py-2 border rounded text-sm outline-none" placeholder="BPN..." required>
+                                        <label class="text-[11px] font-bold text-slate-500 uppercase">Kantah <span class="text-red-500">*</span></label>
+                                        <input type="text" id="kantah" class="w-full mt-1 px-3 py-2 border rounded text-sm outline-none" required>
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="text-xs font-bold text-slate-500 uppercase">Nilai (Rp)</label>
-                                    <input type="number" id="nilai" class="w-full mt-1 px-3 py-2 border rounded text-sm outline-none">
+                                    <label class="text-[11px] font-bold text-slate-500 uppercase">Nilai (Rp)</label>
+                                    <input type="number" id="nilai" class="w-full mt-1 px-3 py-2 border rounded text-sm outline-none" placeholder="Otomatis diformat saat disimpan">
                                 </div>
                             </div>
                         </div>
 
-                        <!-- KANAN: STATUS & FILE -->
-                        <div class="space-y-4">
+                        <!-- KANAN: STATUS & LAMPIRAN (Col Span 7) -->
+                        <div class="lg:col-span-7 space-y-4">
+                            <!-- Progress & SHT -->
                             <div class="bg-white p-4 rounded-xl border shadow-sm">
-                                <div class="flex gap-3">
-                                    <div class="w-1/2">
-                                        <label class="text-xs font-bold text-slate-500 uppercase">Progress</label>
-                                        <select id="progress" onchange="toggleSHTFields()" class="w-full mt-1 px-3 py-2 border rounded text-sm bg-slate-50 font-semibold outline-none">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="text-[11px] font-bold text-slate-500 uppercase">Progress Berkas</label>
+                                        <select id="progress" onchange="toggleSHTFields()" class="w-full mt-1 px-3 py-2 border rounded text-sm bg-slate-50 font-bold outline-none">
                                             <option value="Pemberkasan Awal">Pemberkasan Awal</option>
-                                            <option value="Menunggu SPS">Menunggu SPS</option>
-                                            <option value="Penerbitan SPS">Penerbitan SPS</option>
-                                            <option value="Penerbitan HT">Penerbitan HT</option>
+                                            <option value="Menunggu Dokumen">Menunggu Dokumen</option>
+                                            <option value="Dalam Proses BPN">Dalam Proses BPN</option>
                                             <option value="Selesai">Selesai</option>
                                         </select>
                                     </div>
-                                    <div class="w-1/2">
-                                        <label class="text-xs font-bold text-slate-500 uppercase">Status</label>
+                                    <div>
+                                        <label class="text-[11px] font-bold text-slate-500 uppercase">Status Aktif/Lunas</label>
                                         <select id="status" class="w-full mt-1 px-3 py-2 border rounded text-sm bg-slate-50 outline-none">
                                             <option value="Aktif">Aktif</option>
-                                            <option value="Roya">Roya</option>
+                                            <option value="Lunas/Roya">Lunas / Roya</option>
                                         </select>
                                     </div>
                                 </div>
 
                                 <div id="sht-fields" class="hidden mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded grid grid-cols-2 gap-3">
                                     <div>
-                                        <label class="text-[10px] font-bold text-emerald-800 uppercase">No SHT</label>
-                                        <input type="text" id="noSHT" class="w-full mt-1 px-2 py-1.5 border border-emerald-300 rounded text-sm outline-none">
+                                        <label class="text-[10px] font-bold text-emerald-800 uppercase">No SHT / Roya</label>
+                                        <input type="text" id="noSHT" class="w-full mt-1 px-2 py-1.5 border border-emerald-300 rounded text-sm outline-none" placeholder="Nomor Terbit">
                                     </div>
                                     <div>
                                         <label class="text-[10px] font-bold text-emerald-800 uppercase">Tgl Terbit</label>
@@ -228,12 +231,19 @@
                                 </div>
                             </div>
 
-                            <div class="bg-white p-4 rounded-xl border shadow-sm">
-                                <h4 class="text-xs font-bold text-slate-500 border-b pb-2 mb-3 flex justify-between uppercase">
-                                    Lampiran <span class="normal-case bg-blue-50 text-blue-600 px-1.5 rounded font-normal">PDF / Foto (Auto-Compress)</span>
-                                </h4>
-                                <div class="grid grid-cols-2 gap-2" id="file-upload-container">
-                                    <!-- JS Render -->
+                            <!-- Lampiran Dinamis -->
+                            <div class="bg-white p-4 rounded-xl border shadow-sm flex-1">
+                                <div class="flex justify-between items-center border-b pb-2 mb-3">
+                                    <h4 class="text-sm font-bold text-slate-800 uppercase flex items-center gap-2">
+                                        <i class="ph ph-files text-blue-600 text-lg"></i> Kebutuhan Lampiran
+                                    </h4>
+                                    <span id="lampiran-kategori-label" class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded uppercase">HT</span>
+                                </div>
+                                <p class="text-[10px] text-slate-500 mb-3 bg-slate-50 p-2 rounded">
+                                    <i class="ph ph-info font-bold"></i> Foto (JPG/PNG) akan dikompres otomatis. PDF wajib di bawah 2MB. Untuk kotak "Berkas Agunan", Anda dapat mengunggah banyak file.
+                                </p>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="file-upload-container">
+                                    <!-- JS Render Dinamis -->
                                 </div>
                             </div>
                         </div>
@@ -241,10 +251,10 @@
                 </form>
             </div>
 
-            <!-- Bagian Tombol dan Progress Bar Upload -->
+            <!-- Upload Progress & Action Buttons -->
             <div class="px-4 py-3 border-t bg-white flex flex-col md:flex-row justify-between items-center gap-3">
                 <div class="w-full md:w-1/2 hidden" id="upload-progress-container">
-                    <div class="flex justify-between text-xs font-bold text-blue-700 mb-1">
+                    <div class="flex justify-between text-[11px] font-bold text-blue-700 mb-1">
                         <span id="upload-status-text">Mengunggah...</span>
                         <span id="upload-percent">0%</span>
                     </div>
@@ -254,9 +264,9 @@
                 </div>
                 
                 <div class="flex gap-2 w-full md:w-auto ml-auto" id="form-actions">
-                    <button type="button" onclick="closeModal()" class="w-full md:w-auto px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">Batal</button>
-                    <button type="submit" form="ht-form" class="w-full md:w-auto px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center justify-center gap-2">
-                        <i class="ph ph-floppy-disk text-lg"></i> Simpan Data
+                    <button type="button" onclick="closeModal()" class="w-full md:w-auto px-4 py-2.5 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">Batal</button>
+                    <button type="submit" form="ht-form" class="w-full md:w-auto px-6 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center justify-center gap-2 transition shadow-sm">
+                        <i class="ph ph-floppy-disk text-lg"></i> Simpan
                     </button>
                 </div>
             </div>
@@ -267,7 +277,7 @@
     <div id="preview-modal" class="fixed inset-0 bg-slate-900/95 backdrop-blur-sm hidden items-center justify-center z-[100] p-4 flex-col fade-in">
         <div class="w-full max-w-5xl flex justify-between items-center mb-4">
             <h3 class="text-white font-bold text-sm md:text-lg flex items-center gap-2 truncate pr-4">
-                <i class="ph ph-file-text text-blue-400"></i> <span id="preview-filename">File.pdf</span>
+                <i class="ph ph-file-text text-blue-400"></i> <span id="preview-filename">File</span>
             </h3>
             <button onclick="closePreviewModal()" class="text-white bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg flex items-center gap-1 text-sm font-medium">
                 Tutup <i class="ph ph-x"></i>
@@ -276,37 +286,54 @@
         <div class="w-full max-w-5xl h-[80vh] bg-white rounded-xl overflow-hidden shadow-2xl relative flex items-center justify-center">
             <div id="preview-loading" class="absolute flex flex-col items-center gap-2 text-slate-400">
                 <i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i>
-                <span class="text-sm font-medium">Memuat dokumen...</span>
+                <span class="text-sm font-medium">Memuat dari server...</span>
             </div>
             <iframe id="preview-frame" class="w-full h-full hidden" src=""></iframe>
             <img id="preview-img" class="max-w-full max-h-full object-contain hidden" src="">
         </div>
     </div>
 
-    <!-- TOAST -->
     <div id="toast" class="fixed top-4 right-4 z-[200] transform transition-all duration-300 translate-y-[-100%] opacity-0 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border bg-white">
         <i id="toast-icon" class="ph text-2xl"></i><p id="toast-msg" class="font-medium text-sm"></p>
     </div>
 
-    <!-- LOGIKA JAVASCRIPT -->
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- STATE MANAJEMEN ---
+        // --- DATA & CONFIG ---
         let dbState = {
             docs: [],
-            notarisList: ["Notaris Fulan, S.H., M.Kn.", "Notaris Budi, S.H."] // Default
+            notarisList: ["Notaris Fulan, S.H., M.Kn."],
+            briUnitList: ["BRI Unit Pusat", "BRI Unit Cabang A"]
         };
-        let fileQueue = {};
+        let fileQueue = {}; // Format baru: { key: [ {name, contentBase64}, ... ] }
         let currentSha = null;
-        
-        const attachmentTypes = [
-            { key: 'spa', label: 'Surat Kuasa' },
+
+        // Skema Lampiran Dinamis
+        const htAttachments = [
+            { key: 'spa', label: 'Surat Kuasa (SPA)' },
             { key: 'pengantar', label: 'Pengantar' },
             { key: 'sps', label: 'Dokumen SPS' },
             { key: 'catatanHT', label: 'Catatan HT' },
-            { key: 'sertifikatHT', label: 'Sertifikat HT' }
+            { key: 'sertifikatHT', label: 'Sertifikat HT' },
+            { key: 'berkasAgunan', label: 'Berkas Agunan', multiple: true }
         ];
 
-        // --- INISIALISASI ---
+        const royaAttachments = [
+            { key: 'permohonanRoya', label: 'Permohonan Roya' },
+            { key: 'skLunas', label: 'SK Lunas' },
+            { key: 'uploadSHM', label: 'Upload SHM' },
+            { key: 'htLama', label: 'HT Lama' },
+            { key: 'catatanRoya', label: 'Catatan Roya' },
+            { key: 'sertifikatRoya', label: 'Sertifikat Roya' },
+            { key: 'berkasAgunan', label: 'Berkas Agunan', multiple: true }
+        ];
+
+        function getActiveAttachments() {
+            const isRoya = document.getElementById('kategori')?.value === 'Roya';
+            return isRoya ? royaAttachments : htAttachments;
+        }
+
+        // --- INIT & UI BASIC ---
         document.addEventListener('DOMContentLoaded', () => {
             loadSettings();
             if(getGithubConfig().token) {
@@ -314,23 +341,13 @@
                 syncFromGithub();
             } else {
                 document.getElementById('github-alert').classList.remove('hidden');
-                // Data dummy untuk demo jika tidak ada token
-                dbState.docs = [{ 
-                    id: 1, kategori: 'Pembuatan HT', tglKirim: '2023-10-01', noSPS: 'SPS/2023/100', 
-                    namaDebitur: 'Budi Santoso', noSHM: ['SHM 01', 'SHM 02'], nilai: 100000000, 
-                    notaris: dbState.notarisList[0], kantah: 'BPN Kota', progress: 'Pemberkasan Awal', 
-                    status: 'Aktif', files: {} 
-                }];
                 renderList();
             }
         });
 
-        // --- UI & UX (Sidebar, Tabs, Toast) ---
         function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('sidebar-overlay').classList.toggle('hidden');
         }
 
         function switchTab(tabName) {
@@ -338,19 +355,19 @@
             document.getElementById('tab-settings').classList.add('hidden-tab');
             document.getElementById(`tab-${tabName}`).classList.remove('hidden-tab');
             document.getElementById('header-title').innerText = tabName === 'dashboard' ? 'Daftar Berkas' : 'Pengaturan';
-            if(window.innerWidth < 768) toggleSidebar(); // Tutup sidebar di mobile setelah klik menu
+            if(window.innerWidth < 768) toggleSidebar();
         }
 
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-msg').innerText = message;
-            toast.className = `fixed top-4 right-4 z-[200] transform transition-all duration-300 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border ${type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : type === 'info' ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-red-50 border-red-200 text-red-800'}`;
-            document.getElementById('toast-icon').className = `ph ${type === 'success' ? 'ph-check-circle text-emerald-600' : type === 'info' ? 'ph-info text-blue-600' : 'ph-warning-circle text-red-600'} text-xl md:text-2xl`;
-            setTimeout(() => toast.classList.remove('translate-y-[-100%]', 'opacity-0'), 10);
-            setTimeout(() => toast.classList.add('translate-y-[-100%]', 'opacity-0'), 3000);
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            t.className = `fixed top-4 right-4 z-[200] transform transition-all duration-300 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border ${type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : type === 'info' ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-red-50 border-red-200 text-red-800'}`;
+            document.getElementById('toast-icon').className = `ph ${type === 'success' ? 'ph-check-circle text-emerald-600' : type === 'info' ? 'ph-info text-blue-600' : 'ph-warning-circle text-red-600'} text-xl`;
+            setTimeout(() => t.classList.remove('translate-y-[-100%]', 'opacity-0'), 10);
+            setTimeout(() => t.classList.add('translate-y-[-100%]', 'opacity-0'), 3000);
         }
 
-        // --- GITHUB API ---
+        // --- GITHUB ---
         function getGithubConfig() {
             return {
                 username: localStorage.getItem('gh_username') || '',
@@ -358,257 +375,225 @@
                 token: localStorage.getItem('gh_token') || ''
             };
         }
-
         function loadSettings() {
-            const config = getGithubConfig();
-            document.getElementById('gh-username').value = config.username;
-            document.getElementById('gh-repo').value = config.repo;
-            document.getElementById('gh-token').value = config.token;
+            const c = getGithubConfig();
+            document.getElementById('gh-username').value = c.username;
+            document.getElementById('gh-repo').value = c.repo;
+            document.getElementById('gh-token').value = c.token;
         }
-
         function saveSettings(e) {
             e.preventDefault();
             localStorage.setItem('gh_username', document.getElementById('gh-username').value.trim());
             localStorage.setItem('gh_repo', document.getElementById('gh-repo').value.trim());
             localStorage.setItem('gh_token', document.getElementById('gh-token').value.trim());
-            document.getElementById('settings-status').innerText = "Menguji...";
-            syncFromGithub().then(success => {
-                document.getElementById('settings-status').innerText = success ? "Tersimpan & Terhubung!" : "Gagal terhubung!";
-                if(success) {
-                    document.getElementById('github-alert').classList.add('hidden');
-                    setTimeout(() => switchTab('dashboard'), 1000);
-                }
+            syncFromGithub().then(s => {
+                if(s) { document.getElementById('github-alert').classList.add('hidden'); switchTab('dashboard'); }
             });
         }
-
         async function syncFromGithub() {
-            const config = getGithubConfig();
-            if(!config.token) return false;
+            const c = getGithubConfig(); if(!c.token) return false;
             document.getElementById('sync-icon')?.classList.add('animate-spin');
-            
             try {
-                const url = `https://api.github.com/repos/${config.username}/${config.repo}/contents/database.json`;
-                const response = await fetch(url, { headers: { 'Authorization': `token ${config.token}` } });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    currentSha = data.sha;
+                const res = await fetch(`https://api.github.com/repos/${c.username}/${c.repo}/contents/database.json`, { headers: { 'Authorization': `token ${c.token}` } });
+                if (res.ok) {
+                    const data = await res.json(); currentSha = data.sha;
                     const parsed = JSON.parse(decodeURIComponent(escape(atob(data.content))));
-                    
-                    // Migrasi data jika struktur lama (array langsung)
-                    if(Array.isArray(parsed)) {
-                        dbState.docs = parsed;
-                    } else {
-                        dbState = parsed;
-                    }
+                    if(Array.isArray(parsed)) dbState.docs = parsed; else dbState = parsed;
+                    // Init lists if missing from old data
+                    if(!dbState.notarisList) dbState.notarisList = [];
+                    if(!dbState.briUnitList) dbState.briUnitList = [];
                     showToast('Data tersinkron');
-                } else if (response.status === 404) {
-                    dbState.docs = []; currentSha = null;
-                }
-                renderList();
-                document.getElementById('sync-icon')?.classList.remove('animate-spin');
-                return true;
-            } catch (error) {
-                document.getElementById('sync-icon')?.classList.remove('animate-spin');
-                return false;
-            }
+                } else if (res.status === 404) { dbState.docs = []; currentSha = null; }
+                renderList(); document.getElementById('sync-icon')?.classList.remove('animate-spin'); return true;
+            } catch (e) { document.getElementById('sync-icon')?.classList.remove('animate-spin'); return false; }
         }
-
         async function saveDatabaseToGithub() {
-            const config = getGithubConfig();
-            if(!config.token) return false;
-
-            const url = `https://api.github.com/repos/${config.username}/${config.repo}/contents/database.json`;
-            const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(dbState, null, 2))));
-
-            const bodyData = {
-                message: `Update Database HT`,
-                content: contentBase64,
-                sha: currentSha || undefined
-            };
-
+            const c = getGithubConfig(); if(!c.token) return false;
+            const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(dbState, null, 2))));
             try {
-                const response = await fetch(url, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `token ${config.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(bodyData)
+                const res = await fetch(`https://api.github.com/repos/${c.username}/${c.repo}/contents/database.json`, {
+                    method: 'PUT', headers: { 'Authorization': `token ${c.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: 'Update DB', content: b64, sha: currentSha || undefined })
                 });
-                if (response.ok) {
-                    const data = await response.json();
-                    currentSha = data.content.sha;
-                    return true;
-                }
-            } catch (error) { return false; }
+                if (res.ok) { const data = await res.json(); currentSha = data.content.sha; return true; }
+            } catch (e) { return false; }
         }
-
-        // Upload dengan XHR untuk menampilkan Progress Bar
-        function uploadFileToGithubWithProgress(fileObj, folderName) {
-            return new Promise((resolve, reject) => {
-                const config = getGithubConfig();
-                const fileNameLengkap = `${folderName}_${fileObj.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-                const url = `https://api.github.com/repos/${config.username}/${config.repo}/contents/lampiran/${fileNameLengkap}`;
-
-                const bodyData = JSON.stringify({ message: `Upload ${fileNameLengkap}`, content: fileObj.contentBase64 });
-
+        function uploadFileXHR(fileObj, folderName) {
+            return new Promise((resolve) => {
+                const c = getGithubConfig();
+                // Buat nama unik dengan timestamp agar tidak tertimpa jika nama file sama di upload yg berbeda
+                const safeName = fileObj.name.replace(/[^a-zA-Z0-9.]/g, '_');
+                const fileName = `${folderName}_${Date.now()}_${safeName}`;
                 const xhr = new XMLHttpRequest();
-                xhr.open('PUT', url, true);
-                xhr.setRequestHeader('Authorization', `token ${config.token}`);
+                xhr.open('PUT', `https://api.github.com/repos/${c.username}/${c.repo}/contents/lampiran/${fileName}`, true);
+                xhr.setRequestHeader('Authorization', `token ${c.token}`);
                 xhr.setRequestHeader('Content-Type', 'application/json');
-
-                // Update Progress UI
                 xhr.upload.onprogress = (e) => {
                     if (e.lengthComputable) {
-                        const percent = Math.round((e.loaded / e.total) * 100);
-                        document.getElementById('upload-percent').innerText = `${percent}%`;
-                        document.getElementById('upload-progress-bar').style.width = `${percent}%`;
+                        const p = Math.round((e.loaded / e.total) * 100);
+                        document.getElementById('upload-percent').innerText = `${p}%`;
+                        document.getElementById('upload-progress-bar').style.width = `${p}%`;
                     }
                 };
-
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) resolve(fileNameLengkap);
-                    else resolve(null); // Return null if failed, don't crash
-                };
+                xhr.onload = () => { if (xhr.status >= 200 && xhr.status < 300) resolve(fileName); else resolve(null); };
                 xhr.onerror = () => resolve(null);
-                xhr.send(bodyData);
+                xhr.send(JSON.stringify({ message: `Upload ${fileName}`, content: fileObj.contentBase64 }));
             });
         }
 
-        // --- MANAJEMEN NOTARIS & MULTI SHM ---
-        function renderNotarisOptions() {
-            const select = document.getElementById('notaris');
-            select.innerHTML = dbState.notarisList.map(n => `<option value="${n}">${n}</option>`).join('');
+        // --- FORM LOGIC & MULTI UPLOAD ---
+        function updateDatalists() {
+            document.getElementById('notaris').innerHTML = dbState.notarisList.map(n => `<option value="${n}">${n}</option>`).join('');
+            document.getElementById('bri-list').innerHTML = dbState.briUnitList.map(b => `<option value="${b}">`).join('');
         }
 
         function tambahNotarisBaru() {
-            const nama = prompt("Masukkan nama Notaris beserta gelar (Misal: Joko, S.H., M.Kn.):");
-            if(nama && nama.trim() !== "") {
-                dbState.notarisList.push(nama.trim());
-                renderNotarisOptions();
-                document.getElementById('notaris').value = nama.trim();
-                saveDatabaseToGithub(); // Simpan list notaris
-                showToast("Notaris ditambahkan");
+            const n = prompt("Nama Notaris & Gelar:");
+            if(n && n.trim()) {
+                dbState.notarisList.push(n.trim()); updateDatalists();
+                document.getElementById('notaris').value = n.trim();
+                saveDatabaseToGithub(); showToast("Notaris ditambahkan");
             }
         }
 
-        function addShmInput(value = "") {
-            const container = document.getElementById('shm-container');
-            const div = document.createElement('div');
-            div.className = "flex gap-2 items-center shm-item";
-            div.innerHTML = `
-                <input type="text" value="${value}" class="w-full px-3 py-1.5 border border-slate-300 rounded text-sm outline-none focus:border-blue-500 shm-input" placeholder="SHM / HGB ...">
-                <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:bg-red-50 p-1.5 rounded"><i class="ph ph-trash"></i></button>
-            `;
-            container.appendChild(div);
+        function addShmInput(v = "") {
+            const cont = document.getElementById('shm-container');
+            const div = document.createElement('div'); div.className = "flex gap-2 items-center";
+            div.innerHTML = `<input type="text" value="${v}" class="w-full px-3 py-1.5 border rounded text-sm outline-none shm-input" placeholder="No SHM/HGB..."><button type="button" onclick="this.parentElement.remove()" class="text-red-500 bg-red-50 p-1.5 rounded"><i class="ph ph-trash"></i></button>`;
+            cont.appendChild(div);
         }
 
-        function getShmValues() {
-            const inputs = document.querySelectorAll('.shm-input');
-            let vals = [];
-            inputs.forEach(i => { if(i.value.trim() !== '') vals.push(i.value.trim()); });
-            return vals;
+        function switchKategori() {
+            const kat = document.getElementById('kategori').value;
+            document.getElementById('lampiran-kategori-label').innerText = kat;
+            fileQueue = {}; // Reset queue when switching
+            generateFileUploadUI();
         }
 
-        // --- MANAJEMEN FORM & KOMPRESI GAMBAR ---
         function toggleSHTFields() {
-            const progress = document.getElementById('progress').value;
-            const fields = document.getElementById('sht-fields');
-            if (['Penerbitan HT', 'Selesai'].includes(progress)) fields.classList.remove('hidden');
-            else { fields.classList.add('hidden'); document.getElementById('noSHT').value = ''; document.getElementById('tanggal').value = ''; }
+            const prog = document.getElementById('progress').value;
+            const f = document.getElementById('sht-fields');
+            if (['Selesai'].includes(prog)) f.classList.remove('hidden');
+            else { f.classList.add('hidden'); document.getElementById('noSHT').value = ''; document.getElementById('tanggal').value = ''; }
         }
 
-        function generateFileUploadUI() {
-            const container = document.getElementById('file-upload-container');
-            container.innerHTML = attachmentTypes.map(type => `
-                <div class="border rounded p-2 text-xs bg-slate-50 border-slate-200 shadow-sm relative group">
-                    <div class="font-bold text-slate-600 mb-1 flex justify-between">
-                        ${type.label} 
-                        <span id="badge-${type.key}" class="hidden bg-emerald-100 text-emerald-700 px-1 rounded text-[9px]">Ada</span>
-                    </div>
-                    <div id="wrapper-${type.key}">
-                        <label class="flex justify-center border-dashed border-2 py-1 cursor-pointer bg-white hover:border-blue-400 hover:text-blue-600 transition rounded">
-                            <i class="ph ph-upload-simple mr-1"></i> File
-                            <input type="file" id="file-${type.key}" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect('${type.key}')">
-                        </label>
-                    </div>
-                    <div id="preview-${type.key}" class="hidden flex justify-between items-center bg-blue-50 p-1 mt-1 rounded border border-blue-100">
-                        <span class="truncate max-w-[80px] font-medium text-blue-700" id="name-${type.key}"></span>
-                        <button type="button" onclick="removeFile('${type.key}')" class="text-red-500 hover:text-red-700 bg-white rounded-full p-0.5"><i class="ph ph-x"></i></button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Fungsi Kompresi Otomatis Gambar (Canvas) sebelum diconvert ke Base64
-        function compressImage(file, callback) {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = event => {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1200; // max lebar untuk dokumen
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > MAX_WIDTH) {
-                        height = Math.round(height *= MAX_WIDTH / width);
-                        width = MAX_WIDTH;
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // Compress jadi JPEG dengan kualitas 0.7 (Cukup jelas untuk baca dokumen)
-                    const base64 = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
-                    callback(base64, 'compressed_' + file.name.split('.')[0] + '.jpg');
-                }
-            }
-        }
-
-        function handleFileSelect(key) {
-            const file = document.getElementById(`file-${key}`).files[0];
-            if(file) {
-                const isImage = file.type.startsWith('image/');
-                // Jika PDF, limit ukuran (kompresi PDF via browser sangat berat)
-                if(!isImage && file.size > 2000000) return showToast('File PDF Max 2MB. Silakan kompres manual.', 'error');
-
-                if(isImage) {
-                    showToast('Mengompresi gambar otomatis...', 'info');
-                    compressImage(file, (base64, newName) => {
-                        fileQueue[key] = { name: newName, contentBase64: base64 };
-                        updateFileUI(key, newName);
-                    });
-                } else {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onloadend = () => {
-                        fileQueue[key] = { name: file.name, contentBase64: reader.result.split(',')[1] };
-                        updateFileUI(key, file.name);
-                    };
-                }
-            }
-        }
-
-        function updateFileUI(key, fileName, isFromServer = false) {
-            document.getElementById(`wrapper-${key}`).classList.add('hidden');
-            document.getElementById(`preview-${key}`).classList.remove('hidden');
-            document.getElementById(`badge-${key}`).classList.remove('hidden');
-            document.getElementById(`name-${key}`).innerText = fileName;
+        function generateFileUploadUI(existingFiles = {}) {
+            const cont = document.getElementById('file-upload-container');
+            const attachments = getActiveAttachments();
             
-            if(isFromServer) {
-                // Sembunyikan tombol silang jika file dari server di mode sederhana ini
-                document.getElementById(`preview-${key}`).innerHTML = `<span class="truncate text-blue-700 font-medium"><i class="ph ph-cloud-check"></i> Tersimpan</span>`;
+            // Initialize fileQueue structure for active attachments
+            attachments.forEach(t => { if(!fileQueue[t.key]) fileQueue[t.key] = []; });
+
+            cont.innerHTML = attachments.map(type => {
+                const isMulti = type.multiple;
+                return `
+                <div class="border rounded p-2 text-xs bg-slate-50 relative">
+                    <div class="font-bold text-slate-700 mb-1.5 flex justify-between">
+                        ${type.label} ${isMulti ? '<span class="text-[9px] bg-purple-100 text-purple-700 px-1 rounded">Multi</span>' : ''}
+                    </div>
+                    
+                    <div id="list-${type.key}" class="space-y-1 mb-1.5">
+                        <!-- JS akan merender daftar file di sini (antrian lokal + server) -->
+                    </div>
+
+                    <label class="flex justify-center items-center gap-1 border-dashed border-2 py-1.5 cursor-pointer bg-white hover:border-blue-400 hover:text-blue-600 transition rounded w-full">
+                        <i class="ph ph-plus text-sm"></i> Tambah File
+                        <input type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png" ${isMulti ? 'multiple' : ''} onchange="handleFileSelect(event, '${type.key}', ${isMulti})">
+                    </label>
+                </div>
+                `;
+            }).join('');
+
+            // Render existing files from DB if editing
+            attachments.forEach(t => {
+                const files = existingFiles[t.key];
+                if(files) {
+                    // Normalize to array (backward compatibility for old single strings)
+                    const fileArray = Array.isArray(files) ? files : [files];
+                    const listEl = document.getElementById(`list-${t.key}`);
+                    fileArray.forEach((fileName, idx) => {
+                        if(fileName) {
+                            listEl.innerHTML += `
+                            <div class="flex justify-between items-center bg-blue-50 p-1 rounded border border-blue-100" id="server-file-${t.key}-${idx}">
+                                <span class="truncate max-w-[100px] text-[10px] font-medium text-blue-800"><i class="ph ph-cloud-check mr-1"></i>${fileName}</span>
+                                <button type="button" onclick="removeServerFile('${t.key}', ${idx})" class="text-red-500 bg-white rounded p-0.5" title="Hapus dari database"><i class="ph ph-trash"></i></button>
+                            </div>`;
+                        }
+                    });
+                }
+            });
+        }
+
+        // Menyimpan status file server yang dihapus saat edit
+        let deletedServerFiles = {}; 
+
+        function removeServerFile(key, index) {
+            if(!deletedServerFiles[key]) deletedServerFiles[key] = [];
+            deletedServerFiles[key].push(index);
+            document.getElementById(`server-file-${key}-${index}`).style.display = 'none';
+        }
+
+        function compressImage(file, cb) {
+            const r = new FileReader(); r.readAsDataURL(file);
+            r.onload = e => {
+                const img = new Image(); img.src = e.target.result;
+                img.onload = () => {
+                    const cvs = document.createElement('canvas');
+                    let w = img.width, h = img.height; const MAX = 1200;
+                    if (w > MAX) { h *= MAX/w; w = MAX; }
+                    cvs.width = w; cvs.height = h;
+                    cvs.getContext('2d').drawImage(img, 0, 0, w, h);
+                    cb(cvs.toDataURL('image/jpeg', 0.7).split(',')[1], `img_${Date.now()}.jpg`);
+                }
             }
         }
 
-        function removeFile(key) {
-            delete fileQueue[key];
-            document.getElementById(`wrapper-${key}`).classList.remove('hidden');
-            document.getElementById(`preview-${key}`).classList.add('hidden');
-            document.getElementById(`badge-${key}`).classList.add('hidden');
+        function handleFileSelect(event, key, isMultiple) {
+            const files = event.target.files;
+            if(!files.length) return;
+
+            if(!isMultiple && fileQueue[key].length > 0) {
+                fileQueue[key] = []; // Reset jika single file
+            }
+
+            Array.from(files).forEach(file => {
+                const isImg = file.type.startsWith('image/');
+                if(!isImg && file.size > 2000000) return showToast(`${file.name} (PDF) Max 2MB`, 'error');
+
+                if(isImg) {
+                    compressImage(file, (b64, name) => processAddQueue(key, name, b64));
+                } else {
+                    const r = new FileReader(); r.readAsDataURL(file);
+                    r.onloadend = () => processAddQueue(key, file.name, r.result.split(',')[1]);
+                }
+            });
+            event.target.value = ''; // Reset input
+        }
+
+        function processAddQueue(key, name, b64) {
+            fileQueue[key].push({ name, contentBase64: b64, id: Date.now() + Math.random() });
+            renderQueueUI(key);
+        }
+
+        function removeQueueFile(key, id) {
+            fileQueue[key] = fileQueue[key].filter(f => f.id !== id);
+            renderQueueUI(key);
+        }
+
+        function renderQueueUI(key) {
+            // Hanya merender antrian baru (file server ditangani oleh generateFileUploadUI)
+            // Kita cari elemen queue lama dan hapus
+            const listEl = document.getElementById(`list-${key}`);
+            const oldQueues = listEl.querySelectorAll('.queue-item');
+            oldQueues.forEach(e => e.remove());
+
+            fileQueue[key].forEach(f => {
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center bg-amber-50 p-1 rounded border border-amber-200 queue-item";
+                div.innerHTML = `<span class="truncate max-w-[100px] text-[10px] font-medium text-amber-800"><i class="ph ph-hourglass-high mr-1"></i>${f.name}</span>
+                                 <button type="button" onclick="removeQueueFile('${key}', ${f.id})" class="text-red-500 bg-white rounded p-0.5"><i class="ph ph-x"></i></button>`;
+                listEl.appendChild(div);
+            });
         }
 
         function openModal(id = null) {
@@ -617,79 +602,99 @@
             document.getElementById('shm-container').innerHTML = '';
             document.getElementById('upload-progress-container').classList.add('hidden');
             document.getElementById('form-actions').classList.remove('hidden');
-            fileQueue = {}; 
-            renderNotarisOptions();
-            generateFileUploadUI();
+            fileQueue = {}; deletedServerFiles = {};
+            updateDatalists();
             
             if (id) {
                 document.getElementById('modal-title').innerHTML = '<i class="ph ph-pencil-simple text-blue-600"></i> Edit Berkas';
                 const doc = dbState.docs.find(d => d.id === id);
                 if (doc) {
-                    ['kategori','tglKirim','noSPS','namaDebitur','nilai','notaris','kantah','progress','status','noSHT','tanggal'].forEach(k => {
+                    ['kategori','tglKirim','briUnit','noSPS','namaDebitur','nilai','notaris','kantah','progress','status','noSHT','tanggal'].forEach(k => {
                         if(document.getElementById(k)) document.getElementById(k).value = doc[k] || '';
                     });
                     document.getElementById('form-id').value = doc.id;
+                    if(Array.isArray(doc.noSHM)) doc.noSHM.forEach(s => addShmInput(s)); else addShmInput(doc.noSHM);
                     
-                    // Render SHM Array
-                    if(Array.isArray(doc.noSHM)) doc.noSHM.forEach(shm => addShmInput(shm));
-                    else if (doc.noSHM) addShmInput(doc.noSHM); // Legacy support
-                    
+                    document.getElementById('lampiran-kategori-label').innerText = doc.kategori;
+                    generateFileUploadUI(doc.files);
                     toggleSHTFields();
-                    
-                    // Render Files
-                    if(doc.files) {
-                        Object.keys(doc.files).forEach(k => {
-                            if(doc.files[k]) updateFileUI(k, doc.files[k], true);
-                        });
-                    }
                 }
             } else {
                 document.getElementById('modal-title').innerHTML = '<i class="ph ph-file-plus text-blue-600"></i> Input Berkas Baru';
                 document.getElementById('form-id').value = '';
-                addShmInput(""); // Default 1 input kosong
-                toggleSHTFields();
+                document.getElementById('lampiran-kategori-label').innerText = document.getElementById('kategori').value;
+                addShmInput(); toggleSHTFields(); generateFileUploadUI();
             }
         }
-
         function closeModal() { document.getElementById('form-modal').style.display = 'none'; }
 
         async function handleFormSubmit(e) {
             e.preventDefault();
-            
-            const shmVals = getShmValues();
-            if(shmVals.length === 0) return showToast('Minimal isi 1 nomor SHM/HGB!', 'error');
+            const inputs = document.querySelectorAll('.shm-input');
+            let shmVals = []; inputs.forEach(i => { if(i.value.trim() !== '') shmVals.push(i.value.trim()); });
+            if(!shmVals.length) return showToast('Minimal 1 SHM!', 'error');
 
-            // UI Progress Handle
+            // Cek & Simpan BRI Unit Baru
+            const bri = document.getElementById('briUnit').value.trim();
+            if(bri && !dbState.briUnitList.includes(bri)) dbState.briUnitList.push(bri);
+
             document.getElementById('form-actions').classList.add('hidden');
-            const progressContainer = document.getElementById('upload-progress-container');
-            const progressText = document.getElementById('upload-status-text');
-            progressContainer.classList.remove('hidden');
+            const pCont = document.getElementById('upload-progress-container');
+            const pText = document.getElementById('upload-status-text');
+            pCont.classList.remove('hidden');
 
             const id = document.getElementById('form-id').value;
             const noSPS = document.getElementById('noSPS').value.replace(/\//g, '_');
-            let existingFiles = id ? dbState.docs.find(d => d.id == id).files || {} : {};
+            
+            // Rekonstruksi files
+            let oldDoc = id ? dbState.docs.find(d => d.id == id) : null;
+            let finalFiles = {};
 
-            // Upload files yang ada di antrean
-            const queueKeys = Object.keys(fileQueue);
-            for (let i=0; i<queueKeys.length; i++) {
-                const key = queueKeys[i];
-                progressText.innerText = `Mengunggah ${attachmentTypes.find(t=>t.key===key).label}... (${i+1}/${queueKeys.length})`;
-                document.getElementById('upload-percent').innerText = '0%';
-                document.getElementById('upload-progress-bar').style.width = '0%';
-                
-                const uploadedName = await uploadFileToGithubWithProgress(fileQueue[key], noSPS);
-                if(uploadedName) existingFiles[key] = uploadedName;
+            const attachments = getActiveAttachments();
+            
+            // 1. Ambil file lama yang TIDAK dihapus
+            if(oldDoc && oldDoc.files) {
+                attachments.forEach(t => {
+                    if(oldDoc.files[t.key]) {
+                        let oldArray = Array.isArray(oldDoc.files[t.key]) ? oldDoc.files[t.key] : [oldDoc.files[t.key]];
+                        // Filter yang ada di deletedServerFiles
+                        if(deletedServerFiles[t.key]) {
+                            oldArray = oldArray.filter((_, idx) => !deletedServerFiles[t.key].includes(idx));
+                        }
+                        if(oldArray.length > 0) finalFiles[t.key] = oldArray;
+                    }
+                });
             }
 
-            progressText.innerText = "Menyimpan ke Database...";
+            // 2. Upload file baru
+            for (const t of attachments) {
+                const q = fileQueue[t.key] || [];
+                if(q.length > 0) {
+                    if(!finalFiles[t.key]) finalFiles[t.key] = [];
+                    for(let i=0; i<q.length; i++) {
+                        pText.innerText = `Upload ${t.label} (${i+1}/${q.length})...`;
+                        const resName = await uploadFileXHR(q[i], noSPS);
+                        if(resName) finalFiles[t.key].push(resName);
+                    }
+                }
+                // Jika bukan multiple dan array isinya 1, ubah jadi string (opsional, tapi baik untuk clean data)
+                if(!t.multiple && finalFiles[t.key] && finalFiles[t.key].length === 1) {
+                    finalFiles[t.key] = finalFiles[t.key][0];
+                }
+                // Hapus key jika kosong
+                if(Array.isArray(finalFiles[t.key]) && finalFiles[t.key].length === 0) delete finalFiles[t.key];
+            }
+
+            pText.innerText = "Simpan ke Database...";
 
             const formData = {
                 id: id ? parseInt(id) : Date.now(),
                 kategori: document.getElementById('kategori').value,
                 tglKirim: document.getElementById('tglKirim').value,
+                briUnit: bri,
                 noSPS: document.getElementById('noSPS').value,
                 namaDebitur: document.getElementById('namaDebitur').value,
-                noSHM: shmVals, // Disimpan sebagai array
+                noSHM: shmVals,
                 nilai: document.getElementById('nilai').value,
                 notaris: document.getElementById('notaris').value,
                 kantah: document.getElementById('kantah').value,
@@ -697,202 +702,208 @@
                 status: document.getElementById('status').value,
                 noSHT: document.getElementById('noSHT').value,
                 tanggal: document.getElementById('tanggal').value,
-                files: existingFiles
+                files: finalFiles
             };
 
             if (id) dbState.docs[dbState.docs.findIndex(d => d.id == id)] = formData;
             else dbState.docs.unshift(formData);
 
-            if(await saveDatabaseToGithub()) {
-                showToast('Berkas berhasil disimpan!');
-                closeModal();
-                renderList();
-            } else {
-                showToast('Gagal simpan database', 'error');
-                progressContainer.classList.add('hidden');
-                document.getElementById('form-actions').classList.remove('hidden');
-            }
+            if(await saveDatabaseToGithub()) { showToast('Disimpan!'); closeModal(); renderList(); } 
+            else { showToast('Gagal db', 'error'); pCont.classList.add('hidden'); document.getElementById('form-actions').classList.remove('hidden'); }
         }
 
         async function deleteData(id) {
-            if(confirm("Yakin ingin menghapus berkas ini secara permanen?")) {
+            if(confirm("Hapus permanen berkas ini?")) {
                 dbState.docs = dbState.docs.filter(d => d.id !== id);
-                showToast('Menyimpan perubahan...', 'info');
+                showToast('Menyimpan...', 'info');
                 if(await saveDatabaseToGithub()) renderList();
             }
         }
 
-        // --- MERGE PDF (GABUNGKAN BERKAS & PRINT) ---
-        async function fetchFileBytesFromGithub(fileName) {
-            const config = getGithubConfig();
-            const url = `https://api.github.com/repos/${config.username}/${config.repo}/contents/lampiran/${fileName}`;
-            const response = await fetch(url, { headers: { 'Authorization': `token ${config.token}` } });
-            if(response.ok) {
-                const data = await response.json();
-                // Dekode Base64 ke Uint8Array untuk pdf-lib
-                const binaryString = atob(data.content);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+        // --- MERGE PDF ---
+        async function fetchFileBytes(name) {
+            const c = getGithubConfig();
+            const res = await fetch(`https://api.github.com/repos/${c.username}/${c.repo}/contents/lampiran/${name}`, { headers: { 'Authorization': `token ${c.token}` } });
+            if(res.ok) {
+                const data = await res.json();
+                const str = atob(data.content); const bytes = new Uint8Array(str.length);
+                for (let i=0; i<str.length; i++) bytes[i] = str.charCodeAt(i);
                 return bytes;
-            }
-            return null;
+            } return null;
         }
 
-        async function mergeAndDownloadPDF(docId) {
-            const doc = dbState.docs.find(d => d.id === docId);
-            if(!doc || !doc.files || Object.keys(doc.files).length === 0) return showToast("Tidak ada lampiran untuk digabungkan!", "error");
+        async function mergeAndDownloadPDF(id) {
+            const doc = dbState.docs.find(d => d.id === id);
+            if(!doc || !doc.files || Object.keys(doc.files).length === 0) return showToast("Tidak ada lampiran!", "error");
             
-            showToast("Memproses penggabungan PDF. Harap tunggu...", "info");
+            showToast("Memproses PDF (Bisa memakan waktu)...", "info");
             try {
-                const { PDFDocument } = PDFLib;
-                const mergedPdf = await PDFDocument.create();
+                const { PDFDocument } = PDFLib; const merged = await PDFDocument.create();
+                // Gunakan skema lampiran yang sesuai dengan kategori dokumen saat diunduh
+                const atts = doc.kategori === 'Roya' ? royaAttachments : htAttachments;
 
-                for (const type of attachmentTypes) {
-                    const fileName = doc.files[type.key];
-                    if (fileName) {
-                        showToast(`Mengambil ${type.label}...`, "info");
-                        const bytes = await fetchFileBytesFromGithub(fileName);
-                        if(bytes) {
-                            if(fileName.toLowerCase().endsWith('.pdf')) {
-                                const pdfToMerge = await PDFDocument.load(bytes);
-                                const copiedPages = await mergedPdf.copyPages(pdfToMerge, pdfToMerge.getPageIndices());
-                                copiedPages.forEach((page) => mergedPdf.addPage(page));
-                            } else {
-                                // Jika file berupa gambar (JPG/PNG), tempel ke halaman PDF baru
-                                let img;
-                                if(fileName.toLowerCase().includes('jpg') || fileName.toLowerCase().includes('jpeg')) {
-                                    img = await mergedPdf.embedJpg(bytes);
+                for (const t of atts) {
+                    let files = doc.files[t.key];
+                    if(files) {
+                        files = Array.isArray(files) ? files : [files]; // Normalize
+                        for(const name of files) {
+                            showToast(`Menggabungkan: ${t.label}...`, "info");
+                            const bytes = await fetchFileBytes(name);
+                            if(bytes) {
+                                if(name.toLowerCase().endsWith('.pdf')) {
+                                    const pdf = await PDFDocument.load(bytes);
+                                    const pages = await merged.copyPages(pdf, pdf.getPageIndices());
+                                    pages.forEach(p => merged.addPage(p));
                                 } else {
-                                    img = await mergedPdf.embedPng(bytes);
+                                    let img = name.toLowerCase().match(/\.jpe?g$/) ? await merged.embedJpg(bytes) : await merged.embedPng(bytes);
+                                    const p = merged.addPage([img.width, img.height]);
+                                    p.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
                                 }
-                                const page = mergedPdf.addPage([img.width, img.height]);
-                                page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
                             }
                         }
                     }
                 }
-
-                showToast("Menyimpan PDF Akhir...", "info");
-                const mergedPdfFile = await mergedPdf.save();
-                
-                // Trigger Download ke komputer lokal
-                const blob = new Blob([mergedPdfFile], { type: 'application/pdf' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `BERKAS_LENGKAP_${doc.namaDebitur.replace(/\s+/g,'_')}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-                showToast("PDF Berhasil Diunduh!", "success");
-
-            } catch (error) {
-                console.error(error);
-                showToast("Terjadi kesalahan saat menggabungkan PDF", "error");
-            }
+                const finalBytes = await merged.save();
+                const blob = new Blob([finalBytes], { type: 'application/pdf' });
+                const url = window.URL.createObjectURL(blob); const a = document.createElement('a');
+                a.href = url; a.download = `${doc.kategori.toUpperCase()}_${doc.namaDebitur.replace(/\s+/g,'_')}.pdf`;
+                document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url);
+                showToast("PDF Selesai Diunduh!", "success");
+            } catch (e) { showToast("Gagal gabung PDF", "error"); console.error(e); }
         }
 
-        // --- RENDER LIST (TAMPILAN DAFTAR AKORDEON) ---
+        // --- EXPORT EXCEL (SheetJS) ---
+        function exportToExcel() {
+            if(dbState.docs.length === 0) return showToast('Tidak ada data untuk diexport', 'error');
+            
+            showToast('Menyiapkan file Excel...', 'info');
+            
+            // Map data agar nama kolom di excel rapi
+            const exportData = dbState.docs.map(doc => ({
+                "Kategori Berkas": doc.kategori,
+                "Tanggal Kirim": doc.tglKirim,
+                "BRI Unit": doc.briUnit || '-',
+                "No. SPS/Ref": doc.noSPS,
+                "Nama Debitur": doc.namaDebitur,
+                "Obyek (SHM/HGB)": Array.isArray(doc.noSHM) ? doc.noSHM.join(', ') : doc.noSHM,
+                "Nilai (Rp)": doc.nilai ? Number(doc.nilai) : 0,
+                "Nama Notaris": doc.notaris,
+                "Kantor Pertanahan": doc.kantah,
+                "Status": doc.status,
+                "Progress Saat Ini": doc.progress,
+                "No. SHT/Roya": doc.noSHT || '-',
+                "Tgl Terbit SHT": doc.tanggal || '-',
+                "Jumlah File Upload": doc.files ? Object.values(doc.files).flat().length : 0
+            }));
+
+            // Buat worksheet
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            
+            // Buat workbook
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Rekap_Arsip");
+
+            // Trigger download
+            const tgl = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `Rekap_Arsip_${tgl}.xlsx`);
+            showToast('Excel berhasil diunduh!', 'success');
+        }
+
+        // --- RENDER LIST ---
         function toggleAccordion(id) {
-            const content = document.getElementById(`acc-${id}`);
-            const icon = document.getElementById(`icon-${id}`);
-            if (content.classList.contains('expanded')) {
-                content.classList.remove('expanded');
-                icon.classList.remove('rotate-180');
-            } else {
-                // Tutup yang lain (Opsional, saya buat tetap terbuka saja biar fleksibel)
-                content.classList.add('expanded');
-                icon.classList.add('rotate-180');
-            }
+            const c = document.getElementById(`acc-${id}`); const i = document.getElementById(`icon-${id}`);
+            c.classList.toggle('expanded'); i.classList.toggle('rotate-180');
         }
 
         function renderList() {
             const container = document.getElementById('list-container');
             const search = document.getElementById('searchInput').value.toLowerCase();
+            const filterKat = document.getElementById('filterKategori').value;
             
-            document.getElementById('stat-total').innerText = dbState.docs.length;
+            let filtered = dbState.docs.filter(doc => {
+                const matchSearch = doc.namaDebitur.toLowerCase().includes(search) || doc.noSPS.toLowerCase().includes(search) || 
+                                    (doc.briUnit && doc.briUnit.toLowerCase().includes(search)) ||
+                                    (Array.isArray(doc.noSHM) ? doc.noSHM.join(' ').toLowerCase().includes(search) : doc.noSHM.toLowerCase().includes(search));
+                const matchKat = filterKat === 'Semua' || doc.kategori === filterKat;
+                return matchSearch && matchKat;
+            });
 
-            const filteredData = dbState.docs.filter(doc => 
-                doc.namaDebitur.toLowerCase().includes(search) || 
-                doc.noSPS.toLowerCase().includes(search) ||
-                (Array.isArray(doc.noSHM) ? doc.noSHM.join(' ').toLowerCase().includes(search) : doc.noSHM.toLowerCase().includes(search)) ||
-                (doc.notaris && doc.notaris.toLowerCase().includes(search))
-            );
+            document.getElementById('stat-total').innerText = filtered.length;
 
-            if (!filteredData.length) {
-                container.innerHTML = `<div class="text-center py-10 bg-white rounded-xl border border-dashed text-slate-400"><i class="ph ph-folder-dashed text-4xl mb-2"></i><p class="text-sm">Tidak ada data ditemukan</p></div>`;
+            if (!filtered.length) {
+                container.innerHTML = `<div class="text-center py-10 bg-white rounded-xl border border-dashed text-slate-400"><i class="ph ph-folder-dashed text-4xl mb-2"></i><p>Tidak ada data</p></div>`;
                 return;
             }
 
-            container.innerHTML = filteredData.map(doc => {
-                // Format SHM array to string
-                const shmString = Array.isArray(doc.noSHM) ? doc.noSHM.join(', ') : doc.noSHM;
-                const fileCount = doc.files ? Object.keys(doc.files).filter(k=>doc.files[k]).length : 0;
-                
-                // Badge Kategori & Progress
+            container.innerHTML = filtered.map(doc => {
+                const shmStr = Array.isArray(doc.noSHM) ? doc.noSHM.join(', ') : doc.noSHM;
                 const isRoya = doc.kategori === 'Roya';
-                const progColors = { 'Selesai':'bg-emerald-100 text-emerald-800', 'Penerbitan HT':'bg-purple-100 text-purple-800' };
-                const pColor = progColors[doc.progress] || 'bg-slate-100 text-slate-800';
+                const pColor = doc.progress === 'Selesai' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800';
 
-                // Render File Buttons
-                let filesHtml = attachmentTypes.map(t => {
-                    const hasFile = doc.files && doc.files[t.key];
-                    if(hasFile) return `<button onclick="openPreview('${doc.files[t.key]}')" class="text-[11px] bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-2 py-1 rounded font-medium flex items-center gap-1 transition"><i class="ph ph-eye"></i> ${t.label}</button>`;
-                    return `<span class="text-[11px] bg-slate-50 text-slate-400 border border-dashed border-slate-200 px-2 py-1 rounded flex items-center gap-1"><i class="ph ph-minus"></i> ${t.label}</span>`;
+                // Tentukan lampiran yang berlaku untuk doc ini
+                const atts = isRoya ? royaAttachments : htAttachments;
+                
+                let fileCount = 0;
+                let filesHtml = atts.map(t => {
+                    const files = doc.files ? doc.files[t.key] : null;
+                    if(files) {
+                        const arr = Array.isArray(files) ? files : [files];
+                        if(arr.length > 0) {
+                            fileCount += arr.length;
+                            // Jika ada file, buat tombol preview per file
+                            return arr.map(f => `<button onclick="openPreview('${f}', event)" class="text-[10px] bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-1.5 py-1 rounded font-medium flex items-center gap-1"><i class="ph ph-eye"></i> ${t.multiple?'':t.label}</button>`).join('');
+                        }
+                    }
+                    return `<span class="text-[10px] bg-slate-50 text-slate-400 border border-dashed border-slate-200 px-1.5 py-1 rounded flex items-center gap-1"><i class="ph ph-minus"></i> ${t.label}</span>`;
                 }).join('');
 
                 return `
                 <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                    <!-- List Header (Clickable) -->
-                    <div class="p-3 md:p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 cursor-pointer hover:bg-slate-50 transition" onclick="toggleAccordion(${doc.id})">
+                    <div class="p-3 md:p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 cursor-pointer hover:bg-slate-50" onclick="toggleAccordion(${doc.id})">
                         <div class="flex items-start gap-3 w-full">
-                            <div class="w-1.5 h-10 ${isRoya ? 'bg-amber-400' : 'bg-blue-500'} rounded-full shrink-0"></div>
+                            <div class="w-1.5 h-12 ${isRoya ? 'bg-amber-400' : 'bg-blue-500'} rounded-full shrink-0"></div>
                             <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2 mb-0.5">
-                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${isRoya ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'} uppercase">${doc.kategori}</span>
-                                    <span class="text-xs font-mono font-bold text-slate-500">${doc.noSPS}</span>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${isRoya ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'} uppercase">${doc.kategori}</span>
+                                    <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-bold">${doc.briUnit || '-'}</span>
+                                    <span class="text-xs font-mono font-bold text-slate-500 ml-auto md:ml-0">${doc.noSPS}</span>
                                 </div>
-                                <h3 class="font-bold text-slate-800 text-sm md:text-base truncate" title="${doc.namaDebitur}">${doc.namaDebitur}</h3>
-                                <p class="text-[11px] md:text-xs text-slate-500 truncate mt-0.5"><i class="ph ph-map-pin"></i> ${shmString}</p>
+                                <h3 class="font-bold text-slate-800 text-sm md:text-base truncate">${doc.namaDebitur}</h3>
+                                <p class="text-[10px] md:text-xs text-slate-500 truncate mt-0.5"><i class="ph ph-map-pin"></i> ${shmStr}</p>
                             </div>
                         </div>
-                        
-                        <div class="flex items-center justify-between w-full md:w-auto mt-2 md:mt-0 ml-4 md:ml-0 gap-3">
+                        <div class="flex items-center w-full md:w-auto mt-2 md:mt-0 gap-3 justify-between md:justify-end">
                             <div class="flex md:flex-col items-center md:items-end gap-2 md:gap-1">
-                                <span class="text-[10px] md:text-xs font-bold px-2 py-1 rounded ${pColor}">${doc.progress}</span>
+                                <span class="text-[10px] font-bold px-2 py-1 rounded ${pColor}">${doc.progress}</span>
                                 <span class="text-[10px] text-slate-400 flex items-center gap-1"><i class="ph ph-paperclip"></i> ${fileCount} File</span>
                             </div>
                             <button class="p-1.5 bg-slate-100 rounded text-slate-500 md:ml-2"><i id="icon-${doc.id}" class="ph ph-caret-down transition-transform duration-300"></i></button>
                         </div>
                     </div>
 
-                    <!-- List Content (Accordion) -->
                     <div id="acc-${doc.id}" class="accordion-content bg-slate-50 border-t border-slate-100">
-                        <div class="p-4 flex flex-col md:flex-row gap-4 md:gap-6">
-                            <!-- Detail Info -->
-                            <div class="flex-1 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
-                                <div><span class="block text-slate-400 font-bold mb-0.5">TANGGAL KIRIM</span><span class="font-medium text-slate-800">${doc.tglKirim || '-'}</span></div>
-                                <div><span class="block text-slate-400 font-bold mb-0.5">NILAI HT</span><span class="font-medium text-slate-800">Rp ${Number(doc.nilai||0).toLocaleString('id-ID')}</span></div>
-                                <div class="col-span-2"><span class="block text-slate-400 font-bold mb-0.5">NOTARIS</span><span class="font-medium text-slate-800">${doc.notaris || '-'}</span></div>
-                                <div><span class="block text-slate-400 font-bold mb-0.5">KANTAH</span><span class="font-medium text-slate-800">${doc.kantah || '-'}</span></div>
-                                <div><span class="block text-slate-400 font-bold mb-0.5">NO. SHT</span><span class="font-medium ${doc.noSHT?'text-emerald-700':'text-slate-800'}">${doc.noSHT || 'Belum Terbit'}</span></div>
+                        <div class="p-4 flex flex-col md:flex-row gap-4">
+                            <div class="flex-1 grid grid-cols-2 gap-x-4 gap-y-3 text-xs bg-white p-3 rounded-lg border border-slate-100">
+                                <div><span class="block text-slate-400 font-bold mb-0.5">TANGGAL KIRIM</span><span class="font-medium">${doc.tglKirim || '-'}</span></div>
+                                <div><span class="block text-slate-400 font-bold mb-0.5">NILAI</span><span class="font-medium">Rp ${Number(doc.nilai||0).toLocaleString('id-ID')}</span></div>
+                                <div class="col-span-2"><span class="block text-slate-400 font-bold mb-0.5">NOTARIS</span><span class="font-medium">${doc.notaris || '-'}</span></div>
+                                <div><span class="block text-slate-400 font-bold mb-0.5">KANTAH</span><span class="font-medium">${doc.kantah || '-'}</span></div>
+                                <div><span class="block text-slate-400 font-bold mb-0.5">NO. SHT/ROYA</span><span class="font-medium ${doc.noSHT?'text-emerald-700':'text-slate-800'}">${doc.noSHT || 'Belum Terbit'}</span></div>
                             </div>
                             
-                            <!-- Aksi & File -->
-                            <div class="w-full md:w-auto md:min-w-[250px] border-t md:border-t-0 md:border-l border-slate-200 pt-3 md:pt-0 md:pl-6 flex flex-col gap-3">
-                                <div>
-                                    <span class="block text-[10px] text-slate-400 font-bold mb-1.5">LAMPIRAN:</span>
+                            <div class="w-full md:w-1/2 flex flex-col gap-3">
+                                <div class="bg-white p-3 rounded-lg border border-slate-100 flex-1">
+                                    <span class="block text-[10px] text-slate-400 font-bold mb-2">LAMPIRAN TERSEDIA:</span>
                                     <div class="flex flex-wrap gap-1.5">${filesHtml}</div>
                                 </div>
-                                <div class="mt-auto flex flex-wrap gap-2 pt-2">
-                                    <button onclick="mergeAndDownloadPDF(${doc.id})" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2 rounded flex items-center justify-center gap-1 transition shadow-sm" title="Gabungkan semua file jadi 1 PDF">
-                                        <i class="ph ph-printer"></i> PRINT / SAVE
+                                <div class="flex gap-2">
+                                    <button onclick="mergeAndDownloadPDF(${doc.id}); event.stopPropagation();" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2 rounded flex items-center justify-center gap-1 transition shadow-sm">
+                                        <i class="ph ph-printer"></i> GABUNG & PRINT
                                     </button>
-                                    <button onclick="openModal(${doc.id})" class="flex-1 bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 text-[11px] font-bold py-2 px-2 rounded flex items-center justify-center gap-1 transition shadow-sm">
+                                    <button onclick="openModal(${doc.id}); event.stopPropagation();" class="flex-1 bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 text-[11px] font-bold py-2 px-2 rounded flex items-center justify-center gap-1 transition shadow-sm">
                                         <i class="ph ph-pencil-simple"></i> EDIT
                                     </button>
-                                    <button onclick="deleteData(${doc.id})" class="bg-white border border-red-200 text-red-500 hover:bg-red-50 text-[11px] font-bold p-2 rounded flex items-center justify-center transition shadow-sm">
+                                    <button onclick="deleteData(${doc.id}); event.stopPropagation();" class="bg-white border border-red-200 text-red-500 hover:bg-red-50 p-2 rounded flex items-center justify-center transition shadow-sm">
                                         <i class="ph ph-trash"></i>
                                     </button>
                                 </div>
@@ -903,45 +914,31 @@
             }).join('');
         }
 
-        // --- PREVIEW FILE GITHUB ---
-        async function fetchFileFromGithub(fileName) {
-            const config = getGithubConfig();
-            const url = `https://api.github.com/repos/${config.username}/${config.repo}/contents/lampiran/${fileName}`;
-            try {
-                const res = await fetch(url, { headers: { 'Authorization': `token ${config.token}` } });
-                if(res.ok) {
-                    const data = await res.json();
-                    const mime = fileName.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg';
-                    return `data:${mime};base64,${data.content}`;
-                }
-            } catch (e) { return null; }
-        }
-
-        async function openPreview(fileName) {
+        // --- PREVIEW FILE ---
+        async function openPreview(fileName, event) {
+            if(event) event.stopPropagation();
             document.getElementById('preview-modal').style.display = 'flex';
             document.getElementById('preview-filename').innerText = fileName;
             document.getElementById('preview-loading').classList.remove('hidden');
-            
-            const frame = document.getElementById('preview-frame');
-            const img = document.getElementById('preview-img');
-            frame.classList.add('hidden'); img.classList.add('hidden');
-            frame.src = ''; img.src = '';
+            const f = document.getElementById('preview-frame'); const img = document.getElementById('preview-img');
+            f.classList.add('hidden'); img.classList.add('hidden'); f.src = ''; img.src = '';
 
-            const dataUrl = await fetchFileFromGithub(fileName);
-            document.getElementById('preview-loading').classList.add('hidden');
-
-            if(dataUrl) {
-                if(fileName.toLowerCase().endsWith('.pdf')) { frame.src = dataUrl; frame.classList.remove('hidden'); } 
-                else { img.src = dataUrl; img.classList.remove('hidden'); }
-            } else {
-                showToast("Gagal memuat file", "error"); closePreviewModal();
-            }
+            const c = getGithubConfig();
+            try {
+                const res = await fetch(`https://api.github.com/repos/${c.username}/${c.repo}/contents/lampiran/${fileName}`, { headers: { 'Authorization': `token ${c.token}` } });
+                if(res.ok) {
+                    const data = await res.json();
+                    const url = `data:${fileName.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg'};base64,${data.content}`;
+                    document.getElementById('preview-loading').classList.add('hidden');
+                    if(fileName.toLowerCase().endsWith('.pdf')) { f.src = url; f.classList.remove('hidden'); }
+                    else { img.src = url; img.classList.remove('hidden'); }
+                } else showToast("Gagal memuat file", "error");
+            } catch(e) { showToast("Gagal jaringan", "error"); closePreviewModal(); }
         }
-        function closePreviewModal() { 
-            document.getElementById('preview-modal').style.display = 'none';
-            document.getElementById('preview-frame').src = '';
-            document.getElementById('preview-img').src = '';
-        }
+        function closePreviewModal() { document.getElementById('preview-modal').style.display = 'none'; document.getElementById('preview-frame').src = ''; document.getElementById('preview-img').src = ''; }
     </script>
 </body>
 </html>
+
+
+```
