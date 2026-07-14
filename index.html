@@ -30,7 +30,7 @@
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex overflow-hidden">
 
     <!-- SIDEBAR -->
-    <aside id="sidebar" class="w-64 bg-slate-900 text-white flex flex-col shadow-xl z-30 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0">
+    <aside id="sidebar" class="w-64 bg-slate-900 text-white flex flex-col shadow-xl z-30 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 md:flex transition-all duration-300">
         <div class="p-6 flex items-center justify-between border-b border-slate-800">
             <div class="flex items-center gap-3">
                 <div class="bg-blue-600 p-2 rounded-lg"><i class="ph ph-shield-check text-2xl"></i></div>
@@ -150,9 +150,11 @@
                                 </div>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label class="text-[11px] font-bold text-slate-500 uppercase">BRI Unit <span class="text-red-500">*</span></label>
-                                        <input list="bri-list" id="briUnit" placeholder="Ketik/Pilih Unit..." class="w-full mt-1 px-3 py-2 border rounded text-sm outline-none font-semibold" required>
-                                        <datalist id="bri-list"><!-- Injected by JS --></datalist>
+                                        <label class="text-[11px] font-bold text-slate-500 uppercase flex justify-between">
+                                            <span>BRI Unit <span class="text-red-500">*</span></span>
+                                            <button type="button" onclick="tambahBriUnitBaru()" class="text-blue-600">+ Baru</button>
+                                        </label>
+                                        <select id="briUnit" class="w-full mt-1 px-3 py-2 border rounded text-sm bg-slate-50 font-semibold outline-none" required></select>
                                     </div>
                                     <div>
                                         <label class="text-[11px] font-bold text-slate-500 uppercase">No SPS / Ref <span class="text-red-500">*</span></label>
@@ -165,8 +167,27 @@
                                 </div>
                             </div>
 
+                            <!-- FIELD KHUSUS ROYA -->
+                            <div id="roya-specific-fields" class="hidden bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm space-y-3">
+                                <h5 class="text-[11px] font-bold text-amber-800 uppercase border-b border-amber-200 pb-1 mb-2">Data HT Lama (Khusus Roya)</h5>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-600 uppercase">No SPS Lama</label>
+                                        <input type="text" id="noSpsLama" class="w-full mt-1 px-2 py-1.5 border rounded text-sm outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-600 uppercase">No HT Lama</label>
+                                        <input type="text" id="noHtRoya" class="w-full mt-1 px-2 py-1.5 border rounded text-sm outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-600 uppercase">Kode HT</label>
+                                        <input type="text" id="kodeHtRoya" class="w-full mt-1 px-2 py-1.5 border rounded text-sm outline-none uppercase font-mono">
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Obyek, Notaris, Nilai -->
-                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3 mt-4">
                                 <div>
                                     <label class="text-[11px] font-bold text-slate-500 uppercase flex justify-between items-center bg-slate-50 px-2 py-1 rounded border mb-2">
                                         <span>Obyek (SHM/HGB) <span class="text-red-500">*</span></span>
@@ -321,9 +342,10 @@
             { key: 'permohonanRoya', label: 'Permohonan Roya' },
             { key: 'skLunas', label: 'SK Lunas' },
             { key: 'uploadSHM', label: 'Upload SHM' },
-            { key: 'htLama', label: 'HT Lama' },
-            { key: 'catatanRoya', label: 'Catatan Roya' },
-            { key: 'sertifikatRoya', label: 'Sertifikat Roya' },
+            { key: 'htLama', label: 'Sertifikat HT Lama' },
+            { key: 'catatanHtLama', label: 'Catatan HT Lama' },
+            { key: 'catatanRoya', label: 'Catatan Roya Baru' },
+            { key: 'sertifikatRoya', label: 'Sertifikat Roya Baru' },
             { key: 'berkasAgunan', label: 'Berkas Agunan', multiple: true }
         ];
 
@@ -345,8 +367,15 @@
         });
 
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
-            document.getElementById('sidebar-overlay').classList.toggle('hidden');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (window.innerWidth < 768) {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            } else {
+                sidebar.classList.toggle('md:hidden');
+                sidebar.classList.toggle('md:flex');
+            }
         }
 
         function switchTab(tabName) {
@@ -443,7 +472,16 @@
         // --- FORM LOGIC & MULTI UPLOAD ---
         function updateDatalists() {
             document.getElementById('notaris').innerHTML = dbState.notarisList.map(n => `<option value="${n}">${n}</option>`).join('');
-            document.getElementById('bri-list').innerHTML = dbState.briUnitList.map(b => `<option value="${b}">`).join('');
+            document.getElementById('briUnit').innerHTML = dbState.briUnitList.map(b => `<option value="${b}">${b}</option>`).join('');
+        }
+
+        function tambahBriUnitBaru() {
+            const n = prompt("Nama BRI Unit (Misal: Unit Medan Kota):");
+            if(n && n.trim()) {
+                dbState.briUnitList.push(n.trim()); updateDatalists();
+                document.getElementById('briUnit').value = n.trim();
+                saveDatabaseToGithub(); showToast("BRI Unit ditambahkan");
+            }
         }
 
         function tambahNotarisBaru() {
@@ -465,6 +503,13 @@
         function switchKategori() {
             const kat = document.getElementById('kategori').value;
             document.getElementById('lampiran-kategori-label').innerText = kat;
+            
+            if(kat === 'Roya') {
+                document.getElementById('roya-specific-fields').classList.remove('hidden');
+            } else {
+                document.getElementById('roya-specific-fields').classList.add('hidden');
+            }
+
             fileQueue = {}; // Reset queue when switching
             generateFileUploadUI();
         }
@@ -608,21 +653,21 @@
                 document.getElementById('modal-title').innerHTML = '<i class="ph ph-pencil-simple text-blue-600"></i> Edit Berkas';
                 const doc = dbState.docs.find(d => d.id === id);
                 if (doc) {
-                    ['kategori','tglKirim','briUnit','noSPS','namaDebitur','nilai','notaris','kantah','progress','status','noSHT','tanggal'].forEach(k => {
+                    ['kategori','tglKirim','briUnit','noSPS','namaDebitur','nilai','notaris','kantah','progress','status','noSHT','tanggal','noSpsLama','noHtRoya','kodeHtRoya'].forEach(k => {
                         if(document.getElementById(k)) document.getElementById(k).value = doc[k] || '';
                     });
                     document.getElementById('form-id').value = doc.id;
                     if(Array.isArray(doc.noSHM)) doc.noSHM.forEach(s => addShmInput(s)); else addShmInput(doc.noSHM);
                     
-                    document.getElementById('lampiran-kategori-label').innerText = doc.kategori;
+                    switchKategori();
                     generateFileUploadUI(doc.files);
                     toggleSHTFields();
                 }
             } else {
                 document.getElementById('modal-title').innerHTML = '<i class="ph ph-file-plus text-blue-600"></i> Input Berkas Baru';
                 document.getElementById('form-id').value = '';
-                document.getElementById('lampiran-kategori-label').innerText = document.getElementById('kategori').value;
-                addShmInput(); toggleSHTFields(); generateFileUploadUI();
+                switchKategori();
+                addShmInput(); toggleSHTFields();
             }
         }
         function closeModal() { document.getElementById('form-modal').style.display = 'none'; }
@@ -690,8 +735,11 @@
                 id: id ? parseInt(id) : Date.now(),
                 kategori: document.getElementById('kategori').value,
                 tglKirim: document.getElementById('tglKirim').value,
-                briUnit: bri,
+                briUnit: document.getElementById('briUnit').value,
                 noSPS: document.getElementById('noSPS').value,
+                noSpsLama: document.getElementById('noSpsLama').value,
+                noHtRoya: document.getElementById('noHtRoya').value,
+                kodeHtRoya: document.getElementById('kodeHtRoya').value,
                 namaDebitur: document.getElementById('namaDebitur').value,
                 noSHM: shmVals,
                 nilai: document.getElementById('nilai').value,
@@ -783,6 +831,9 @@
                 "Tanggal Kirim": doc.tglKirim,
                 "BRI Unit": doc.briUnit || '-',
                 "No. SPS/Ref": doc.noSPS,
+                "No. SPS Lama (Roya)": doc.noSpsLama || '-',
+                "No. HT Lama (Roya)": doc.noHtRoya || '-',
+                "Kode HT (Roya)": doc.kodeHtRoya || '-',
                 "Nama Debitur": doc.namaDebitur,
                 "Obyek (SHM/HGB)": Array.isArray(doc.noSHM) ? doc.noSHM.join(', ') : doc.noSHM,
                 "Nilai (Rp)": doc.nilai ? Number(doc.nilai) : 0,
@@ -888,6 +939,13 @@
                                 <div class="col-span-2"><span class="block text-slate-400 font-bold mb-0.5">NOTARIS</span><span class="font-medium">${doc.notaris || '-'}</span></div>
                                 <div><span class="block text-slate-400 font-bold mb-0.5">KANTAH</span><span class="font-medium">${doc.kantah || '-'}</span></div>
                                 <div><span class="block text-slate-400 font-bold mb-0.5">NO. SHT/ROYA</span><span class="font-medium ${doc.noSHT?'text-emerald-700':'text-slate-800'}">${doc.noSHT || 'Belum Terbit'}</span></div>
+                                ${doc.kategori === 'Roya' ? `
+                                <div class="col-span-2 pt-2 mt-1 border-t border-slate-100 grid grid-cols-3 gap-2 bg-amber-50/50 p-2 rounded">
+                                    <div><span class="block text-slate-400 font-bold mb-0.5">SPS LAMA</span><span class="font-medium">${doc.noSpsLama || '-'}</span></div>
+                                    <div><span class="block text-slate-400 font-bold mb-0.5">HT LAMA</span><span class="font-medium">${doc.noHtRoya || '-'}</span></div>
+                                    <div><span class="block text-slate-400 font-bold mb-0.5">KODE HT</span><span class="font-medium font-mono">${doc.kodeHtRoya || '-'}</span></div>
+                                </div>
+                                ` : ''}
                             </div>
                             
                             <div class="w-full md:w-1/2 flex flex-col gap-3">
@@ -938,6 +996,3 @@
     </script>
 </body>
 </html>
-
-
-
